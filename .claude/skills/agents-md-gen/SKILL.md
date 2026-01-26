@@ -23,10 +23,11 @@ python scripts/generate.py --path /path/to/repository
 ```
 
 The script will:
-1. Scan the repository directory structure
+1. Scan the repository directory structure (with safe symlink handling)
 2. Detect programming languages and frameworks
-3. Analyze code patterns and conventions
+3. Analyze code patterns and naming conventions
 4. Generate AGENTS.md at repository root
+5. Preserve any existing custom sections
 
 ## What Gets Generated
 
@@ -40,10 +41,9 @@ The script will:
 - Main entry points
 - Module/package structure
 
-### Conventions
-- Naming patterns (variables, functions, classes)
-- Code style observations
-- Architectural patterns
+### Naming Conventions
+- Detected patterns (camelCase, PascalCase, snake_case, etc.)
+- Frequency analysis of naming styles
 
 ### Testing
 - Test framework used
@@ -61,25 +61,30 @@ Generated AGENTS.md follows this format:
 [Brief description of what this codebase does]
 
 ## Technology Stack
-- Languages: [detected languages]
-- Frameworks: [detected frameworks]
+### Languages
+[detected languages with file counts]
+
+### Frameworks & Libraries
+[detected frameworks and build tools]
+
+### Testing
+[detected test frameworks]
+
+## Naming Conventions
+[detected coding conventions with frequency]
 
 ## Directory Structure
 [Tree view of important directories]
 
-## Conventions
-- Naming: [observed patterns]
-- Style: [code style notes]
-
-## Development Workflow
-[How to build, test, run]
+## Development Commands
+[build, test, run command placeholders]
 ```
 
 ## Scripts
 
 ### generate.py
 
-Main generator script.
+Main generator script with advanced features.
 
 ```bash
 # Generate for current directory
@@ -88,18 +93,58 @@ python scripts/generate.py
 # Generate for specific path
 python scripts/generate.py --path /path/to/repo
 
-# Include additional sections
-python scripts/generate.py --include testing,docs,api
+# Select specific sections only
+python scripts/generate.py --sections overview,languages,frameworks
 
-# Verbose output
+# Exclude specific sections
+python scripts/generate.py --exclude-sections commands,structure
+
+# Verbose output (shows progress for large repos)
 python scripts/generate.py --verbose
+
+# Custom output path
+python scripts/generate.py --path . --output docs/AGENTS.md
 ```
 
-Options:
-- `--path`: Repository path (default: current directory)
-- `--include`: Comma-separated sections to include
-- `--verbose`: Show detailed output
-- `--output`: Output file path (default: AGENTS.md)
+### CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `--path` | Repository path (default: current directory) |
+| `--output` | Output file path (default: AGENTS.md) |
+| `--sections` | Comma-separated sections to include |
+| `--exclude-sections` | Comma-separated sections to exclude |
+| `--verbose` | Show detailed output and progress |
+
+### Available Sections
+
+- `overview` - Project overview section
+- `languages` - Detected languages with file counts
+- `frameworks` - Frameworks and libraries
+- `testing` - Test frameworks detected
+- `conventions` - Naming convention analysis
+- `structure` - Directory structure tree
+- `commands` - Development commands placeholder
+
+## Features
+
+### Safe Symbolic Link Handling
+- Prevents infinite loops from circular symlinks
+- Tracks visited real paths during traversal
+- Safe for repositories with symlinked dependencies
+
+### Preserve Existing Content
+When regenerating AGENTS.md, custom sections are preserved:
+- Custom team guidelines
+- Manual documentation additions
+- Project-specific notes
+- Any section not auto-generated
+
+### Performance Optimized
+- Progress indicators for large repositories
+- Early exit after detecting sufficient frameworks
+- Sampling for convention detection (50 files max)
+- Completes in <30 seconds for 1,000-file repositories
 
 ## Reference
 

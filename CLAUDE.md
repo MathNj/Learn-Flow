@@ -1,210 +1,277 @@
-# Claude Code Rules
+# CLAUDE.md
 
-This file is generated during init for the selected agent.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-You are an expert AI assistant specializing in Spec-Driven Development (SDD). Your primary goal is to work with the architext to build products.
+## Project Overview
 
-## Task context
+This is **Hackathon III**: Reusable Intelligence and Cloud-Native Mastery. The project builds agentic infrastructure using Skills, MCP Code Execution, Claude Code, and Goose.
 
-**Your Surface:** You operate on a project level, providing guidance to users and executing development tasks via a defined set of tools.
+**Key Concept:** Skills are the product, not just documentation or applications. This repository contains Claude Skills that teach AI agents how to build sophisticated cloud-native applications autonomously.
 
-**Your Success is Measured By:**
-- All outputs strictly follow the user intent.
-- Prompt History Records (PHRs) are created automatically and accurately for every user prompt.
-- Architectural Decision Record (ADR) suggestions are made intelligently for significant decisions.
-- All changes are small, testable, and reference code precisely.
+## Architecture
 
-## Core Guarantees (Product Promise)
+### Spec-Driven Development (SDD) Framework
 
-- Record every user input verbatim in a Prompt History Record (PHR) after every user message. Do not truncate; preserve full multiline input.
-- PHR routing (all under `history/prompts/`):
-  - Constitution → `history/prompts/constitution/`
-  - Feature-specific → `history/prompts/<feature-name>/`
-  - General → `history/prompts/general/`
-- ADR suggestions: when an architecturally significant decision is detected, suggest: "📋 Architectural decision detected: <brief>. Document? Run `/sp.adr <title>`." Never auto‑create ADRs; require user consent.
+This repository uses SpecKit Plus, a Spec-Driven Development framework:
 
-## Development Guidelines
+```
+.specify/
+├── memory/
+│   └── constitution.md      # Project principles (template, needs customization)
+├── templates/
+│   ├── spec-template.md     # Feature specification template
+│   ├── plan-template.md     # Architecture plan template
+│   ├── tasks-template.md    # Implementation tasks template
+│   ├── phr-template.prompt.md  # Prompt History Record template
+│   ├── adr-template.md      # Architecture Decision Record template
+│   └── checklist-template.md
+└── scripts/powershell/      # PowerShell scripts for SDD workflow
+```
 
-### 1. Authoritative Source Mandate:
-Agents MUST prioritize and use MCP tools and CLI commands for all information gathering and task execution. NEVER assume a solution from internal knowledge; all methods require external verification.
+### Feature Workflow
 
-### 2. Execution Flow:
-Treat MCP servers as first-class tools for discovery, verification, execution, and state capture. PREFER CLI interactions (running commands and capturing outputs) over manual file creation or reliance on internal knowledge.
+1. **Create Feature**: `/sp.specify` or `create-new-feature.ps1` - Creates branch, specs/###-name/, and history/prompts/###-name/
+2. **Write Spec**: Edit `specs/###-name/spec.md` - User stories, requirements, success criteria
+3. **Create Plan**: `/sp.plan` - Generates `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
+4. **Create Tasks**: `/sp.tasks` - Breaks plan into testable tasks with cases
+5. **Implement**: `/sp.implement` - Executes tasks phase-by-phase with TDD approach
+6. **Record**: `/sp.phr` - Creates Prompt History Record for every exchange
 
-### 3. Knowledge capture (PHR) for Every User Input.
-After completing requests, you **MUST** create a PHR (Prompt History Record).
+### Directory Structure
 
-**When to create PHRs:**
-- Implementation work (code changes, new features)
-- Planning/architecture discussions
-- Debugging sessions
-- Spec/task/plan creation
-- Multi-step workflows
+```
+specs/
+└── ###-feature-name/
+    ├── spec.md           # Feature requirements (user stories, FRs, SCs)
+    ├── plan.md           # Architecture decisions, tech stack, NFRs
+    ├── tasks.md          # Testable implementation tasks
+    ├── research.md       # Technical research and decisions
+    ├── data-model.md     # Entities and relationships
+    ├── quickstart.md     # Integration scenarios
+    └── contracts/        # API contracts (OpenAPI/GraphQL)
 
-**PHR Creation Process:**
+history/
+├── prompts/
+│   ├── constitution/     # Constitution-related PHRs
+│   ├── general/          # General work PHRs
+│   └── ###-feature-name/ # Feature-specific PHRs
+└── adr/                  # Architecture Decision Records
 
-1) Detect stage
-   - One of: constitution | spec | plan | tasks | red | green | refactor | explainer | misc | general
+.claude/
+├── agents/               # Multi-agent system definitions
+│   ├── triage-agent.md           # Routes queries to specialists
+│   ├── concepts-agent.md         # Explains Python concepts
+│   ├── code-review-agent.md      # Analyzes code quality
+│   ├── debug-agent.md            # Parses errors and provides hints
+│   ├── exercise-agent.md         # Generates coding challenges
+│   └── progress-agent.md         # Tracks mastery and progress
+├── commands/             # Custom slash commands (sp.* commands)
+├── skills/               # Reusable AI skills
+│   └── skill-name/
+│       ├── SKILL.md      # Required: YAML frontmatter + instructions
+│       ├── scripts/      # Optional: Executable code (Python/Bash)
+│       ├── references/   # Optional: Documentation to load as needed
+│       └── assets/       # Optional: Files used in output
+└── template/
+    └── SKILL.md          # Template for new skills
+```
 
-2) Generate title
-   - 3–7 words; create a slug for the filename.
+## Common Commands
 
-2a) Resolve route (all under history/prompts/)
-  - `constitution` → `history/prompts/constitution/`
-  - Feature stages (spec, plan, tasks, red, green, refactor, explainer, misc) → `history/prompts/<feature-name>/` (requires feature context)
-  - `general` → `history/prompts/general/`
+### PowerShell Scripts (Spec-Driven Development)
 
-3) Prefer agent‑native flow (no shell)
-   - Read the PHR template from one of:
-     - `.specify/templates/phr-template.prompt.md`
-     - `templates/phr-template.prompt.md`
-   - Allocate an ID (increment; on collision, increment again).
-   - Compute output path based on stage:
-     - Constitution → `history/prompts/constitution/<ID>-<slug>.constitution.prompt.md`
-     - Feature → `history/prompts/<feature-name>/<ID>-<slug>.<stage>.prompt.md`
-     - General → `history/prompts/general/<ID>-<slug>.general.prompt.md`
-   - Fill ALL placeholders in YAML and body:
-     - ID, TITLE, STAGE, DATE_ISO (YYYY‑MM‑DD), SURFACE="agent"
-     - MODEL (best known), FEATURE (or "none"), BRANCH, USER
-     - COMMAND (current command), LABELS (["topic1","topic2",...])
-     - LINKS: SPEC/TICKET/ADR/PR (URLs or "null")
-     - FILES_YAML: list created/modified files (one per line, " - ")
-     - TESTS_YAML: list tests run/added (one per line, " - ")
-     - PROMPT_TEXT: full user input (verbatim, not truncated)
-     - RESPONSE_TEXT: key assistant output (concise but representative)
-     - Any OUTCOME/EVALUATION fields required by the template
-   - Write the completed file with agent file tools (WriteFile/Edit).
-   - Confirm absolute path in output.
+```powershell
+# Create a new feature branch and spec structure
+.specify/scripts/powershell/create-new-feature.ps1 "Feature description" [-Json] [-ShortName name]
 
-4) Use sp.phr command file if present
-   - If `.**/commands/sp.phr.*` exists, follow its structure.
-   - If it references shell but Shell is unavailable, still perform step 3 with agent‑native tools.
+# Check prerequisites (returns JSON with paths)
+.specify/scripts/powershell/check-prerequisites.ps1 -Json
 
-5) Shell fallback (only if step 3 is unavailable or fails, and Shell is permitted)
-   - Run: `.specify/scripts/bash/create-phr.sh --title "<title>" --stage <stage> [--feature <name>] --json`
-   - Then open/patch the created file to ensure all placeholders are filled and prompt/response are embedded.
+# Setup plan context
+.specify/scripts/powershell/setup-plan.ps1 -Json
 
-6) Routing (automatic, all under history/prompts/)
-   - Constitution → `history/prompts/constitution/`
-   - Feature stages → `history/prompts/<feature-name>/` (auto-detected from branch or explicit feature context)
-   - General → `history/prompts/general/`
+# Update agent-specific context files
+.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude
+```
 
-7) Post‑creation validations (must pass)
-   - No unresolved placeholders (e.g., `{{THIS}}`, `[THAT]`).
-   - Title, stage, and dates match front‑matter.
-   - PROMPT_TEXT is complete (not truncated).
-   - File exists at the expected path and is readable.
-   - Path matches route.
+### Python Scripts (Skill Management)
 
-8) Report
-   - Print: ID, path, stage, title.
-   - On any failure: warn but do not block the main command.
-   - Skip PHR only for `/sp.phr` itself.
+```bash
+# Initialize a new skill
+.claude/skills/skill-creator/scripts/init_skill.py <skill-name> --path <output-dir>
 
-### 4. Explicit ADR suggestions
-- When significant architectural decisions are made (typically during `/sp.plan` and sometimes `/sp.tasks`), run the three‑part test and suggest documenting with:
-  "📋 Architectural decision detected: <brief> — Document reasoning and tradeoffs? Run `/sp.adr <decision-title>`"
-- Wait for user consent; never auto‑create the ADR.
+# Package a skill into distributable .skill file
+.claude/skills/skill-creator/scripts/package_skill.py <path/to/skill-folder>
 
-### 5. Human as Tool Strategy
-You are not expected to solve every problem autonomously. You MUST invoke the user for input when you encounter situations that require human judgment. Treat the user as a specialized tool for clarification and decision-making.
+# Validate a skill's code execution pattern
+.claude/skills/mcp-code-execution/scripts/validate_pattern.py --skill-path ../skill-name
+```
 
-**Invocation Triggers:**
-1.  **Ambiguous Requirements:** When user intent is unclear, ask 2-3 targeted clarifying questions before proceeding.
-2.  **Unforeseen Dependencies:** When discovering dependencies not mentioned in the spec, surface them and ask for prioritization.
-3.  **Architectural Uncertainty:** When multiple valid approaches exist with significant tradeoffs, present options and get user's preference.
-4.  **Completion Checkpoint:** After completing major milestones, summarize what was done and confirm next steps. 
+### Slash Commands
 
-## Default policies (must follow)
-- Clarify and plan first - keep business understanding separate from technical plan and carefully architect and implement.
-- Do not invent APIs, data, or contracts; ask targeted clarifiers if missing.
-- Never hardcode secrets or tokens; use `.env` and docs.
-- Prefer the smallest viable diff; do not refactor unrelated code.
-- Cite existing code with code references (start:end:path); propose new code in fenced blocks.
-- Keep reasoning private; output only decisions, artifacts, and justifications.
+- `/sp.specify` - Create new feature spec
+- `/sp.plan` - Generate implementation plan from spec
+- `/sp.tasks` - Create testable task breakdown
+- `/sp.implement` - Execute implementation tasks
+- `/sp.phr` - Record Prompt History Record
+- `/sp.clarify` - Clarify underspecified requirements
+- `/sp.checklist` - Generate feature checklist
+- `/sp.analyze` - Analyze cross-artifact consistency
+- `/sp.adr` - Create Architecture Decision Record
+- `/sp.git.commit_pr` - Commit work and create PR
+- `/sp.constitution` - Update project constitution
 
-### Execution contract for every request
-1) Confirm surface and success criteria (one sentence).
-2) List constraints, invariants, non‑goals.
-3) Produce the artifact with acceptance checks inlined (checkboxes or tests where applicable).
-4) Add follow‑ups and risks (max 3 bullets).
-5) Create PHR in appropriate subdirectory under `history/prompts/` (constitution, feature-name, or general).
-6) If plan/tasks identified decisions that meet significance, surface ADR suggestion text as described above.
+## Skills Architecture
 
-### Minimum acceptance criteria
-- Clear, testable acceptance criteria included
-- Explicit error paths and constraints stated
-- Smallest viable change; no unrelated edits
-- Code references to modified/inspected files where relevant
+### MCP Code Execution Pattern
 
-## Architect Guidelines (for planning)
+This repository emphasizes the **MCP Code Execution Pattern** for efficient token usage:
 
-Instructions: As an expert architect, generate a detailed architectural plan for [Project Name]. Address each of the following thoroughly.
+**Problem:** Direct MCP tool calls load ALL data into context (50,000+ tokens)
 
-1. Scope and Dependencies:
-   - In Scope: boundaries and key features.
-   - Out of Scope: explicitly excluded items.
-   - External Dependencies: systems/services/teams and ownership.
+**Solution:** Wrap MCP calls in scripts that execute outside context, return only results (~100 tokens)
 
-2. Key Decisions and Rationale:
-   - Options Considered, Trade-offs, Rationale.
-   - Principles: measurable, reversible where possible, smallest viable change.
+```
+Inefficient (Direct MCP):
+  getSheet("abc123") → 10,000 rows into context → 50,000 tokens
 
-3. Interfaces and API Contracts:
-   - Public APIs: Inputs, Outputs, Errors.
-   - Versioning Strategy.
-   - Idempotency, Timeouts, Retries.
-   - Error Taxonomy with status codes.
+Efficient (Code Execution):
+  script: getSheet().filter(...).slice(0,5) → 5 rows → ~50 tokens
+```
 
-4. Non-Functional Requirements (NFRs) and Budgets:
-   - Performance: p95 latency, throughput, resource caps.
-   - Reliability: SLOs, error budgets, degradation strategy.
-   - Security: AuthN/AuthZ, data handling, secrets, auditing.
-   - Cost: unit economics.
+### Skill Structure
 
-5. Data Management and Migration:
-   - Source of Truth, Schema Evolution, Migration and Rollback, Data Retention.
+Every skill must have:
+- **SKILL.md** (required): YAML frontmatter + instructions
+  - `name`: Skill identifier
+  - `description`: When to use the skill (primary trigger)
+- **scripts/** (optional): Executable code for deterministic operations
+- **references/** (optional): Documentation loaded as needed
+- **assets/** (optional): Files used in output (templates, images)
 
-6. Operational Readiness:
-   - Observability: logs, metrics, traces.
-   - Alerting: thresholds and on-call owners.
-   - Runbooks for common tasks.
-   - Deployment and Rollback strategies.
-   - Feature Flags and compatibility.
+### Available Skills
 
-7. Risk Analysis and Mitigation:
-   - Top 3 Risks, blast radius, kill switches/guardrails.
+1. **agents-md-gen**: Generate AGENTS.md files for repositories
+2. **kafka-k8s-setup**: Deploy Kafka on Kubernetes using Helm
+3. **postgres-k8s-setup**: Deploy PostgreSQL on Kubernetes with migrations
+4. **fastapi-dapr-agent**: Generate FastAPI microservices with Dapr
+5. **mcp-code-execution**: Demonstrate MCP code execution pattern
+6. **nextjs-k8s-deploy**: Deploy Next.js on Kubernetes with Monaco
+7. **docusaurus-deploy**: Initialize and deploy Docusaurus docs
+8. **skill-creator**: Guide for creating new skills
 
-8. Evaluation and Validation:
-   - Definition of Done (tests, scans).
-   - Output Validation for format/requirements/safety.
+## Multi-Agent System (LearnFlow)
 
-9. Architectural Decision Record (ADR):
-   - For each significant decision, create an ADR and link it.
+This repository contains a multi-agent architecture for the LearnFlow Python learning platform. Each agent has specialized capabilities and works with others to provide comprehensive tutoring.
 
-### Architecture Decision Records (ADR) - Intelligent Suggestion
+### Agent Overview
 
-After design/architecture work, test for ADR significance:
+| Agent | Purpose | When Used |
+|-------|---------|-----------|
+| **triage-agent** | Routes queries to appropriate specialist | First point of contact for all queries |
+| **concepts-agent** | Explains Python concepts with examples | Student asks "how" or "what" questions |
+| **code-review-agent** | Analyzes code quality (PEP 8, efficiency) | Student submits code for review |
+| **debug-agent** | Parses errors, provides progressive hints | Student encounters errors/exceptions |
+| **exercise-agent** | Generates and auto-grades challenges | Student wants practice exercises |
+| **progress-agent** | Tracks mastery, streaks, motivation | Student checks progress |
 
-- Impact: long-term consequences? (e.g., framework, data model, API, security, platform)
-- Alternatives: multiple viable options considered?
-- Scope: cross‑cutting and influences system design?
+### Agent Routing Flow
 
-If ALL true, suggest:
-📋 Architectural decision detected: [brief-description]
-   Document reasoning and tradeoffs? Run `/sp.adr [decision-title]`
+```
+User Query
+    ↓
+Triage Agent (analyze intent)
+    ↓
+    ├── Error keywords → Debug Agent
+    ├── Practice/quiz → Exercise Agent
+    ├── Review/improve → Code Review Agent
+    ├── Progress/score → Progress Agent
+    └── Default → Concepts Agent
+```
 
-Wait for consent; never auto-create ADRs. Group related decisions (stacks, authentication, deployment) into one ADR when appropriate.
+### Agent Structure
 
-## Basic Project Structure
+Each agent definition file includes:
+- **YAML frontmatter**: name, description (trigger)
+- **Purpose**: What the agent does
+- **Capabilities**: Core functions and logic
+- **Integration**: How it coordinates with other agents
+- **Code examples**: Implementation patterns
 
-- `.specify/memory/constitution.md` — Project principles
-- `specs/<feature>/spec.md` — Feature requirements
-- `specs/<feature>/plan.md` — Architecture decisions
-- `specs/<feature>/tasks.md` — Testable tasks with cases
-- `history/prompts/` — Prompt History Records
-- `history/adr/` — Architecture Decision Records
-- `.specify/` — SpecKit Plus templates and scripts
+### Agent Coordination
 
-## Code Standards
-See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+Agents share context including:
+- Student's current mastery level (0-100%)
+- Recent struggles and error patterns
+- Current module/lesson
+- Conversation history
+- Learning streak and consistency score
+
+### Mastery Levels
+
+| Score | Level | Color | Description |
+|-------|-------|-------|-------------|
+| 0-40% | Beginner | Red | Foundational work needed |
+| 41-70% | Learning | Yellow | Practice recommended |
+| 71-90% | Proficient | Green | Refining skills |
+| 91-100% | Mastered | Blue | Ready for advanced topics |
+
+### Struggle Detection
+
+Agents escalate to teachers when:
+- Same error type repeated 3+ times
+- Student stuck on topic >10 minutes
+- Quiz score below 50%
+- Student says "I don't understand" or "I'm stuck"
+- 5+ failed code executions in a row
+
+## Skills + Agents Integration
+
+This repository demonstrates both **Skills** (for teaching AI to build infrastructure) and **Agents** (for the LearnFlow application architecture):
+
+- **Skills** in `.claude/skills/` teach Claude Code how to deploy K8s, Kafka, PostgreSQL, etc.
+- **Agents** in `.claude/agents/` define the multi-agent system that powers LearnFlow's tutoring
+
+When building LearnFlow:
+1. Use Skills to deploy infrastructure (kafka-k8s-setup, postgres-k8s-setup)
+2. Use Skills to generate services (fastapi-dapr-agent)
+3. Implement Agent logic for the tutoring system
+
+## Prompt History Records (PHRs)
+
+**CRITICAL:** Every user interaction must create a PHR in `history/prompts/`.
+
+PHR routing:
+- Constitution → `history/prompts/constitution/`
+- Feature-specific → `history/prompts/<feature-name>/`
+- General → `history/prompts/general/`
+
+PHR stages: constitution | spec | plan | tasks | red | green | refactor | explainer | misc | general
+
+Use `/sp.phr` command to create PHRs automatically.
+
+## Architecture Decision Records (ADRs)
+
+For significant architectural decisions (impact, alternatives, cross-cutting), suggest creating ADRs:
+
+```
+📋 Architectural decision detected: <brief-description>
+   Document reasoning and tradeoffs? Run `/sp.adr <decision-title>`
+```
+
+Never auto-create ADRs; require user consent.
+
+## Windows Development
+
+This repository is optimized for Windows development using PowerShell. All `.specify/scripts/` are PowerShell scripts. Git commands should work in both WSL and native Windows environments.
+
+## Spec Templates
+
+Templates use placeholder notation that must be filled:
+- `[FEATURE NAME]` → Feature title
+- `[###-feature-name]` → Branch pattern
+- `[DATE]` → ISO date format
+- `- [ ]` → Unchecked checkbox
+- `- [x]` → Completed checkbox
+
+Priority levels in specs: P1 (critical), P2 (important), P3 (nice-to-have)
