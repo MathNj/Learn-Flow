@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
-import { Alert } from '@/components/ui/alert'
-import { Send, Code, CheckCircle, Lightbulb } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Send, Code, CheckCircle, Lightbulb, WifiOff, Loader2 } from 'lucide-react'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import type { ChatMessage } from '@/lib/types'
 import { mockChatMessages } from '@/lib/mock-data'
+import { useWebSocket } from '@/lib/hooks/use-websocket'
 
 export interface TutorChatProps {
   studentId: string
@@ -33,6 +34,16 @@ const TutorChat: React.FC<TutorChatProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // WebSocket connection for real-time AI chat
+  const { sendMessage, isConnected, readyState } = useWebSocket(
+    studentId,
+    (message: ChatMessage) => {
+      // Add AI response to messages
+      setMessages((prev) => [...prev, message])
+      setIsLoading(false)
+    }
+  )
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -52,21 +63,19 @@ const TutorChat: React.FC<TutorChatProps> = ({
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const messageContent = input
     setInput('')
     setIsLoading(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        role: 'assistant',
-        content: `I understand you're asking about: "${input}". Let me help you with that.\n\nIn Python, this is a fundamental concept. Here's a simple example:\n\`\`\`python\n# Example code\nresult = some_function()\nprint(result)\n\`\`\`\n\nWould you like me to explain this further or provide more examples?`,
-        timestamp: new Date().toISOString(),
-        agentType: 'concepts',
-      }
-      setMessages((prev) => [...prev, aiMessage])
-      setIsLoading(false)
-    }, 1500)
+    // Send message via WebSocket to backend
+    sendMessage({
+      content: messageContent,
+      student_id: studentId,
+      context: {
+        topic_id: topicId,
+        exercise_id: exerciseId,
+      },
+    })
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -82,10 +91,41 @@ const TutorChat: React.FC<TutorChatProps> = ({
         return <Lightbulb className="h-4 w-4" />
       case 'code-review':
         return <CheckCircle className="h-4 w-4" />
+      case 'debug':
+        return <Code className="h-4 w-4" />
       case 'exercise':
         return <Code className="h-4 w-4" />
+      case 'progress':
+        return <CheckCircle className="h-4 w-4" />
       default:
         return <div className="h-4 w-4 rounded-full bg-primary-500" />
+    }
+  }
+
+  const getConnectionStatus = () => {
+    switch (readyState) {
+      case 'connecting':
+        return (
+          <Badge variant="outline" className="gap-1.5 text-xs">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Connecting...
+          </Badge>
+        )
+      case 'open':
+        return (
+          <Badge variant="outline" className="gap-1.5 border-success-500/30 bg-success-500/10 text-success-600 dark:text-success-400">
+            <div className="h-2 w-2 rounded-full bg-success-500" />
+            Connected
+          </Badge>
+        )
+      case 'error':
+      case 'closed':
+        return (
+          <Badge variant="outline" className="gap-1.5 border-warning-500/30 bg-warning-500/10 text-warning-600 dark:text-warning-400">
+            <WifiOff className="h-3 w-3" />
+            Demo Mode
+          </Badge>
+        )
     }
   }
 
@@ -103,6 +143,7 @@ const TutorChat: React.FC<TutorChatProps> = ({
               <p className="text-xs text-slate-500 dark:text-slate-400">Always here to help</p>
             </div>
           </div>
+          {getConnectionStatus()}
         </div>
 
         {/* Messages */}
