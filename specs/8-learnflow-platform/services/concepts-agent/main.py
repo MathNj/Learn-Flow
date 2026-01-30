@@ -193,7 +193,7 @@ def _get_level_name(mastery: int) -> str:
 # Kafka Event Handlers (Dapr) - Disabled for local dev without Dapr
 # ============================================================================
 
-# @app.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_REQUESTS)
+# @dapr.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_REQUESTS)
 async def handle_concept_request(event_data: dict) -> None:
     """
     Subscribe to concepts.requests topic and generate explanations.
@@ -220,4 +220,4 @@ async def handle_concept_request(event_data: dict) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8101)))

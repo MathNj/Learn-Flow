@@ -1,0 +1,28 @@
+# Dapr Configuration Template
+# Copy this file to each service directory and customize the app-id and port
+
+apiVersion: dapr.io/v1
+kind: Configuration
+metadata:
+  name: learnflow-config
+spec:
+  # Tracing configuration
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://localhost:9411/api/v2/spans"
+
+  # Metrics configuration
+  metrics:
+    enabled: true
+
+  # API logging
+  logging:
+    level: "info"
+
+  # Feature specifications
+  features:
+    - name: Actor.Reminders
+      enabled: true
+    - name: Actor.StateStore
+      enabled: true

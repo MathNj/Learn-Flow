@@ -4,7 +4,9 @@
       "Bash(if not exist \"C:\\\\Users\\\\hamdan\\\\Desktop\\\\hackathon3\\\\specs\\\\5-mcp-code-execution\\\\checklists\" mkdir \"C:\\\\Users\\\\hamdan\\\\Desktop\\\\hackathon3\\\\specs\\\\5-mcp-code-execution\\\\checklists\":*)",
       "Bash(powershell:*)",
       "Bash(python validate_pattern.py:*)",
-      "Bash(python -m uvicorn:*)"
+      "Bash(python -m uvicorn:*)",
+      "Bash(npm install:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }

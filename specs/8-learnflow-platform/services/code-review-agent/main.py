@@ -251,7 +251,7 @@ async def generate_feedback(submission: CodeSubmission) -> dict:
 # Kafka Event Handlers (Dapr)
 # ============================================================================
 
-@app.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_SUBMISSIONS)
+# @dapr.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_SUBMISSIONS)
 async def handle_code_submission(event_data: dict) -> None:
     """Subscribe to code.submissions and review"""
     try:
@@ -264,4 +264,4 @@ async def handle_code_submission(event_data: dict) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8003)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8103)))

@@ -214,7 +214,7 @@ async def route_and_execute(query: QueryRequest) -> AgentResponse:
 # Kafka Event Handlers (Dapr)
 # ============================================================================
 
-@app.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_REQUESTS)
+# @dapr.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_REQUESTS)
 async def handle_learning_request(event_data: dict) -> None:
     """
     Subscribe to learning.requests topic and route to specialist.
@@ -242,4 +242,5 @@ async def handle_learning_request(event_data: dict) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    port = int(os.getenv("PORT", 8100))
+    uvicorn.run(app, host="0.0.0.0", port=port)

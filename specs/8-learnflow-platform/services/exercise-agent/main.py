@@ -241,4 +241,4 @@ async def validate_submission(exercise_id: str, code: str) -> ValidationResult:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8005)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8105)))

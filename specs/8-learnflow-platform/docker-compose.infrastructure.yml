@@ -1,0 +1,135 @@
+# LearnFlow Infrastructure Services
+# This file starts Kafka, PostgreSQL, and Zookeeper for local development
+
+version: '3.8'
+
+services:
+  # ============================================
+  # Zookeeper (required for Kafka)
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: learnflow-zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - learnflow-network
+
+  # ============================================
+  # Kafka
+  # ============================================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: learnflow-kafka
+    hostname: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - learnflow-network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # PostgreSQL
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: learnflow-postgres
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: learnflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./specs/8-learnflow-platform/services/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - learnflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Kafka UI (optional, for development)
+  # ============================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: learnflow-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: learnflow
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - learnflow-network
+
+  # ============================================
+  # pgAdmin (optional, for development)
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: learnflow-pgadmin
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@learnflow.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - learnflow-network
+
+networks:
+  learnflow-network:
+    driver: bridge
+    name: learnflow-network
+
+volumes:
+  zookeeper-data:
+    name: learnflow-zookeeper-data
+  zookeeper-logs:
+    name: learnflow-zookeeper-logs
+  kafka-data:
+    name: learnflow-kafka-data
+  postgres-data:
+    name: learnflow-postgres-data
+  pgadmin-data:
+    name: learnflow-pgadmin-data
