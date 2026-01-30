@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  {% if has_pubsub %}
+  kafka:
+    image: bitnami/kafka:latest
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      - KAFKA_CFG_KRAFT_CLUSTER_ID="cluster1"
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass redis_password
+
+  dapr-placement:
+    image: daprio/dapr:latest
+    command: ["./placement", "-port", "50005"]
+    ports:
+      - "50005:50005"
+
+  dapr-sidecar:
+    image: daprio/dapr:latest
+    command: ["./daprd", "-app-id", "{{ service_name }}", "-app-port", "{{ port }}", "-dapr-http-port", "3500", "-components-path", "/components"]
+    volumes:
+      - ./dapr-components:/components
+    depends_on:
+      - kafka
+      - redis
+    network_mode: "service:{{ service_name }}"
+  {% endif %}
+
+  {{ service_name }}:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "{{ port }}:{{ port }}"
+    environment:
+      - APP_NAME={{ service_name }}
+      - LOG_LEVEL=DEBUG
+      - DEBUG=true
+      {% if has_pubsub %}
+      - DAPR_HOST=dapr-sidecar
+      - DAPR_HTTP_PORT=3500
+      {% endif %}
+      {% if has_agent %}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      {% endif %}
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      {% if has_pubsub %}
+      - kafka
+      - redis
+      - dapr-sidecar
+      {% endif %}

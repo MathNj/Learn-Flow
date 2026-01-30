@@ -1,0 +1,133 @@
+"""
+OpenAI agent integration for {{ service_name }}.
+"""
+import logging
+from typing import List, Dict, Optional, Any
+
+from openai import AsyncOpenAI
+
+from app.core.config import settings
+{% if has_state %}
+from app.services.state import state
+{% endif %}
+
+log = logging.getLogger(__name__)
+
+
+class OpenAIAgent:
+    """
+    OpenAI agent with context management.
+
+    Provides AI chat capabilities with conversation history
+    persisted in Dapr state store.
+    """
+
+    def __init__(self):
+        api_key = settings.OPENAI_API_KEY
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is required")
+
+        self.client = AsyncOpenAI(api_key=api_key)
+        self.model = settings.OPENAI_MODEL
+        self.temperature = settings.OPENAI_TEMPERATURE
+        self.max_tokens = settings.OPENAI_MAX_TOKENS
+        self.max_history = settings.MAX_HISTORY or 20
+
+    async def chat(
+        self,
+        session_id: str,
+        user_message: str,
+        system_prompt: str,
+    ) -> str:
+        """
+        Chat with context persistence.
+
+        Args:
+            session_id: Session identifier
+            user_message: User's message
+            system_prompt: System prompt for the conversation
+
+        Returns:
+            Assistant's response
+        """
+        # Load conversation history
+        history = await self._load_history(session_id)
+
+        # Initialize with system prompt if new
+        if not history:
+            history.append({"role": "system", "content": system_prompt})
+
+        # Add user message
+        history.append({"role": "user", "content": user_message})
+
+        # Trim history if too long
+        if len(history) > self.max_history:
+            # Keep system prompt and recent messages
+            history = [history[0]] + history[-self.max_history + 1:]
+
+        try:
+            # Call OpenAI
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=history,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+            )
+
+            assistant_message = response.choices[0].message.content
+
+            # Update and save history
+            history.append({"role": "assistant", "content": assistant_message})
+            await self._save_history(session_id, history)
+
+            return assistant_message
+
+        except Exception as e:
+            log.error(f"OpenAI API error: {e}")
+            raise
+
+    async def _load_history(self, session_id: str) -> List[Dict[str, str]]:
+        """Load conversation history from state store."""
+        {% if has_state %}
+        key = f"conversation:{session_id}"
+        data = await state.get(key)
+
+        if data and "messages" in data:
+            return data["messages"]
+
+        return []
+        {% else %}
+        # No state store - return empty history
+        return []
+        {% endif %}
+
+    async def _save_history(self, session_id: str, history: List[Dict[str, str]]) -> None:
+        """Save conversation history to state store."""
+        {% if has_state %}
+        key = f"conversation:{session_id}"
+        await state.save(key, {"messages": history})
+        {% else %}
+        pass  # No state store - don't persist
+        {% endif %}
+
+    async def clear_context(self, session_id: str) -> None:
+        """Clear conversation history."""
+        {% if has_state %}
+        key = f"conversation:{session_id}"
+        await state.delete(key)
+        log.info(f"Cleared conversation history for session {session_id}")
+        {% else %}
+        log.info(f"Context clearing requested (no state store configured)")
+        {% endif %}
+
+
+# Global agent instance
+agent: Optional[OpenAIAgent] = None
+
+
+def get_agent() -> OpenAIAgent:
+    """Get or create agent instance."""
+    global agent
+    if agent is None:
+        agent = OpenAIAgent()
+    return agent

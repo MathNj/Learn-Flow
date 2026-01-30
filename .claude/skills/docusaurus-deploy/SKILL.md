@@ -1,230 +1,71 @@
 ---
 name: docusaurus-deploy
-description: Initialize and deploy Docusaurus documentation sites. Use when creating project documentation, deploying docs to static hosting, or generating docs from markdown. Includes search, navigation, and versioning support.
+description: Initialize and deploy Docusaurus documentation sites. Use when creating project documentation with search, navigation, and Mermaid diagrams.
 ---
 
 # Docusaurus Deploy
 
-Initialize and deploy Docusaurus documentation sites with automatic content generation.
-
-## When to Use
-
-- Creating documentation sites
-- Deploying docs to static hosting
-- Generating API documentation
-- Documenting microservices architectures
+Initialize and deploy Docusaurus documentation sites with search, navigation, and Mermaid diagram support.
 
 ## Quick Start
 
-### Initialize Documentation
-
 ```bash
-./scripts/init.sh
+# Initialize a new Docusaurus site
+python .claude/skills/docusaurus-deploy/scripts/initialize_docusaurus.py \
+  --site-name "My Project Docs" \
+  --description "Project documentation" \
+  --output ./docs
+
+# Build and deploy
+./.claude/skills/docusaurus-deploy/scripts/deploy.sh \
+  --site-path ./docs \
+  --target github-pages
 ```
 
-Creates a new Docusaurus site in `docs/` directory.
+## When to Use
 
-### Build Documentation
+- Creating documentation sites for projects
+- Generating docs from spec.md files
+- Deploying to GitHub Pages, S3, or static hosting
+- Projects needing Mermaid diagrams
+- Sites with built-in or Algolia search
 
-```bash
-./scripts/build.sh
-```
+## What This Generates
 
-Generates static HTML in `docs/build/` directory.
+**Docusaurus Site Structure:**
+- TypeScript configuration
+- Custom theme with branding
+- Sidebar navigation (auto-generated)
+- Mermaid diagram support
+- Code syntax highlighting
+- Search (built-in or Algolia)
 
-### Deploy to Hosting
+**LearnFlow Documentation Sections:**
+- Getting Started (installation, quick start)
+- Skills Library (overview, development guide)
+- Architecture (system overview, microservices)
+- API Documentation (REST, Kafka, WebSocket)
+- Deployment (K8s, cloud, CI/CD)
+- LearnFlow Platform (user/teacher/student guides)
 
-```bash
-./scripts/deploy.sh
-```
+## Success Criteria
 
-Deploys to configured hosting (GitHub Pages, Vercel, or custom).
+| Criterion | Target |
+|-----------|--------|
+| Single command init | `initialize_docusaurus.py` |
+| Build time | < 2 minutes |
+| Search response | < 100ms |
+| Page load | < 2 seconds |
+| SKILL.md size | < 500 tokens |
 
-## Generated Structure
+## Script-Based Pattern
 
-```
-docs/
-├── docs/                 # Documentation content
-│   ├── intro.md
-│   ├── api.md
-│   └── guides/
-├── blog/                 # Blog posts (optional)
-├── src/
-│   ├── theme/            # Custom React components
-│   └── css/              # Custom styles
-├── static/               # Static assets
-├── docusaurus.config.js  # Configuration
-├── sidebars.js           # Navigation
-└── package.json
-```
+This skill uses the MCP Code Execution pattern: scripts execute outside agent context and return minimal output for token efficiency.
 
-## Auto-Generation from Specs
+## References
 
-Generate documentation from spec files:
-
-```bash
-python scripts/generate-from-specs.py --specs-path ../specs
-```
-
-Each spec becomes a documentation page with:
-- Overview section
-- Requirements table
-- Success criteria
-- Diagrams (if present)
-
-## Scripts
-
-### init.sh
-
-Initialize a new Docusaurus site.
-
-```bash
-# Default initialization
-./scripts/init.sh
-
-# Custom site name
-./scripts/init.sh --site-name "My Docs"
-
-# With TypeScript
-./scripts/init.sh --typescript
-
-# Skip install
-./scripts/init.sh --no-install
-```
-
-### build.sh
-
-Build the documentation site.
-
-```bash
-# Standard build
-./scripts/build.sh
-
-# Build with analytics
-./scripts/build.sh --analytics
-
-# Build specific locale
-./scripts/build.sh --locale fr
-
-# Clear cache first
-./scripts/build.sh --clean
-```
-
-### deploy.sh
-
-Deploy to hosting.
-
-```bash
-# Deploy to GitHub Pages
-./scripts/deploy.sh --target github-pages
-
-# Deploy to Vercel
-./scripts/deploy.sh --target vercel
-
-# Deploy to custom URL
-./scripts/deploy.sh --target custom --url https://docs.example.com
-
-# Dry run
-./scripts/deploy.sh --dry-run
-```
-
-### serve.sh
-
-Serve documentation locally for preview.
-
-```bash
-# Serve on default port (3000)
-./scripts/serve.sh
-
-# Custom port
-./scripts/serve.sh --port 8080
-
-# With hot reload
-./scripts/serve.sh --hot-reload
-```
-
-## Configuration
-
-### Site Settings
-
-Edit `docusaurus.config.js`:
-
-```javascript
-module.exports = {
-  title: 'My Documentation',
-  tagline: 'Docs for my project',
-  url: 'https://docs.example.com',
-  baseUrl: '/',
-  // ...
-};
-```
-
-### Navigation
-
-Edit `sidebars.js`:
-
-```javascript
-module.exports = {
-  docs: [
-    {
-      type: 'category',
-      label: 'Getting Started',
-      items: ['intro', 'installation', 'quickstart'],
-    },
-    // ...
-  ],
-};
-```
-
-## Search Configuration
-
-### Algolia DocSearch
-
-```bash
-./scripts/configure-search.sh --provider algolia --appid YOUR_APP_ID
-```
-
-### Built-in Search
-
-```javascript
-// docusaurus.config.js
-themes: [
-  [
-    require.resolve('@easyops-cn/docusaurus-theme-local-search'),
-    {
-      hashed: true,
-      indexPages: true,
-    },
-  ],
-];
-```
-
-## Standard Sections
-
-### Getting Started
-- Installation guide
-- Quick start tutorial
-- Environment setup
-
-### Architecture
-- System overview
-- Component diagrams
-- Technology choices
-
-### API Documentation
-- REST endpoints
-- Event schemas
-- Authentication
-
-### Deployment
-- Kubernetes deployment
-- Cloud deployment
-- CI/CD setup
-
-## Troubleshooting
-
-See [REFERENCE.md](references/REFERENCE.md) for:
-- Build errors
-- Deployment issues
-- Customization guide
-- Plugin configuration
+Deep documentation in `references/`:
+- `DOCUSAURUS_CONFIG.md` - Configuration options, theming
+- `SEARCH_SETUP.md` - Algolia and local search
+- `MERMAIRD_DIAGRAMS.md` - Diagram syntax and examples
+- `DEPLOYMENT.md` - GitHub Pages, S3, custom hosting

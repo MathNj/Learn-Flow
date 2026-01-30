@@ -1,0 +1,72 @@
+"""
+Dapr pub/sub event publisher for {{ service_name }}.
+"""
+import asyncio
+import logging
+from typing import Any, Dict, Optional
+
+import httpx
+
+from app.core.config import settings
+
+log = logging.getLogger(__name__)
+
+
+class EventPublisher:
+    """Publishes events to Dapr pub/sub."""
+
+    def __init__(self):
+        self.dapr_url = settings.dapr_http_url
+        self.component_name = settings.PUBSUB_COMPONENT_NAME
+
+    async def publish(
+        self,
+        topic: str,
+        data: Dict[str, Any],
+        retries: int = 3,
+        backoff_ms: int = 100,
+    ) -> bool:
+        """
+        Publish event to Dapr pub/sub.
+
+        Args:
+            topic: Topic name
+            data: Event payload
+            retries: Number of retry attempts
+            backoff_ms: Initial backoff in milliseconds
+
+        Returns:
+            True if published successfully
+        """
+        url = f"{self.dapr_url}/v1.0/publish/{self.component_name}/{topic}"
+
+        for attempt in range(retries):
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    response = await client.post(url, json=data)
+
+                    if response.status_code == 200:
+                        log.info(f"Published event to {topic}: {data.get('event_id')}")
+                        return True
+                    else:
+                        log.warning(
+                            f"Failed to publish to {topic}: {response.status_code} "
+                            f"(attempt {attempt + 1}/{retries})"
+                        )
+
+            except httpx.HTTPError as e:
+                log.warning(
+                    f"HTTP error publishing to {topic}: {e} "
+                    f"(attempt {attempt + 1}/{retries})"
+                )
+
+            # Exponential backoff
+            if attempt < retries - 1:
+                await asyncio.sleep(backoff_ms * (2 ** attempt) / 1000)
+
+        log.error(f"Failed to publish event to {topic} after {retries} attempts")
+        return False
+
+
+# Global publisher instance
+publisher = EventPublisher()

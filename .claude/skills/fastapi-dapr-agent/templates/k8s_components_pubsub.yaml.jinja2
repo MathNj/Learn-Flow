@@ -1,0 +1,18 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kafka-pubsub
+  labels:
+    app: {{ service_name }}
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka-kafka-broker.kafka.svc.cluster.local:9092"
+  - name: consumerGroup
+    value: "learning-services"
+  - name: authRequired
+    value: "false"
+scopes:
+  {{ service_name }}: true

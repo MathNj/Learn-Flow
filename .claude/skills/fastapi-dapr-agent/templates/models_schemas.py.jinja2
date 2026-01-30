@@ -1,0 +1,52 @@
+"""
+Pydantic schemas for {{ service_name }}.
+
+Defines request/response models for API endpoints.
+"""
+from datetime import datetime
+from typing import Any, Dict, Optional
+from pydantic import BaseModel, Field
+
+
+class BaseResponse(BaseModel):
+    """Base response model."""
+
+    status: str = Field(default="success", description="Response status")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ErrorResponse(BaseModel):
+    """Error response model."""
+
+    status: str = Field(default="error", description="Response status")
+    error: str = Field(..., description="Error message")
+    detail: Optional[str] = Field(None, description="Detailed error information")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+{% if has_health %}
+class HealthResponse(BaseModel):
+    """Health check response."""
+
+    status: str = Field(..., description="Health status: healthy, unhealthy")
+    service: str = Field(..., description="Service name")
+    version: str = Field(..., description="Service version")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ReadinessResponse(BaseModel):
+    """Readiness check response."""
+
+    status: str = Field(..., description="Readiness status: ready, not_ready")
+    dapr_connected: bool = Field(..., description="Dapr sidecar connectivity")
+    dependencies: Dict[str, str] = Field(default_factory=dict, description="Dependency status")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+{% endif %}
+
+
+class EventData(BaseModel):
+    """Base event data model."""
+
+    event_id: str = Field(..., description="Unique event identifier")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    data: Dict[str, Any] = Field(default_factory=dict, description="Event payload")

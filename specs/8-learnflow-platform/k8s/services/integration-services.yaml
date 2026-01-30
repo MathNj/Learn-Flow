@@ -1,0 +1,329 @@
+---
+# API Gateway
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: learnflow
+  labels:
+    app: api-gateway
+    component: gateway
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+      protocol: TCP
+  selector:
+    app: api-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: learnflow
+  labels:
+    app: api-gateway
+    component: gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        component: gateway
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: api-gateway
+        image: learnflow/api-gateway:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: TRIAGE_SERVICE_URL
+          value: "http://triage-service:8001"
+        - name: CONCEPTS_SERVICE_URL
+          value: "http://concepts-agent:8002"
+        - name: CODE_REVIEW_SERVICE_URL
+          value: "http://code-review-agent:8003"
+        - name: DEBUG_SERVICE_URL
+          value: "http://debug-agent:8004"
+        - name: EXERCISE_SERVICE_URL
+          value: "http://exercise-agent:8005"
+        - name: PROGRESS_SERVICE_URL
+          value: "http://progress-service:8006"
+        - name: CODE_EXECUTION_SERVICE_URL
+          value: "http://code-execution-service:8007"
+        - name: WEBSOCKET_SERVICE_URL
+          value: "http://websocket-service:8008"
+        - name: NOTIFICATION_SERVICE_URL
+          value: "http://notification-service:8009"
+        - name: SERVICE_TIMEOUT
+          value: "30"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Code Execution Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-execution-service
+  namespace: learnflow
+  labels:
+    app: code-execution-service
+    component: sandbox
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8007
+      targetPort: 8007
+      name: http
+  selector:
+    app: code-execution-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-execution-service
+  namespace: learnflow
+  labels:
+    app: code-execution-service
+    component: sandbox
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: code-execution-service
+  template:
+    metadata:
+      labels:
+        app: code-execution-service
+        component: sandbox
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: code-execution-service
+        image: learnflow/code-execution-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8007
+          name: http
+        env:
+        - name: EXECUTION_TIMEOUT
+          value: "10"
+        - name: MAX_OUTPUT_SIZE
+          value: "10000"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8007
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8007
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# WebSocket Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket-service
+  namespace: learnflow
+  labels:
+    app: websocket-service
+    component: realtime
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8008
+      targetPort: 8008
+      name: http
+      protocol: TCP
+  selector:
+    app: websocket-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-service
+  namespace: learnflow
+  labels:
+    app: websocket-service
+    component: realtime
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: websocket-service
+  template:
+    metadata:
+      labels:
+        app: websocket-service
+        component: realtime
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "websocket-service"
+        dapr.io/app-port: "8008"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: websocket-service
+        image: learnflow/websocket-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8008
+          name: http
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8008
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8008
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Notification Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: learnflow
+  labels:
+    app: notification-service
+    component: notification
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8009
+      targetPort: 8009
+      name: http
+  selector:
+    app: notification-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: learnflow
+  labels:
+    app: notification-service
+    component: notification
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+        component: notification
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "notification-service"
+        dapr.io/app-port: "8009"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: notification-service
+        image: learnflow/notification-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8009
+          name: http
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: SMTP_HOST
+          value: "smtp.gmail.com"
+        - name: SMTP_PORT
+          value: "587"
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: smtp-credentials
+              key: username
+              optional: true
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smtp-credentials
+              key: password
+              optional: true
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8009
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8009
+          initialDelaySeconds: 5
+          periodSeconds: 10

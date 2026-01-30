@@ -1,225 +1,70 @@
 ---
 name: nextjs-k8s-deploy
-description: Deploy Next.js applications on Kubernetes with Monaco editor integration. Use when deploying React/Next.js frontends, setting up code editors in browsers, or containerizing web applications for Kubernetes. Includes production optimization and health checks.
+description: Deploy Next.js applications on Kubernetes with Monaco editor integration. Use when creating containerized React frontends with in-browser code editing capabilities.
 ---
 
 # Next.js Kubernetes Deploy
 
-Deploy Next.js applications to Kubernetes with Monaco editor for in-browser code editing.
-
-## When to Use
-
-- Deploying Next.js applications to Kubernetes
-- Adding Monaco editor to web apps
-- Containerizing React/Next.js frontends
-- Setting up production web deployments
+Deploy production-ready Next.js applications to Kubernetes with Monaco editor integration.
 
 ## Quick Start
 
-### Generate Next.js App
-
 ```bash
-python scripts/generate.py --app-name my-app
+# Generate a new Next.js project with Monaco
+python .claude/skills/nextjs-k8s-deploy/scripts/generate_project.py \
+  --app-name myapp \
+  --pages landing,auth,student-dashboard,code-editor \
+  --features monaco,tailwind \
+  --output ./myapp
+
+# Deploy to Kubernetes
+./.claude/skills/nextjs-k8s-deploy/scripts/deploy.sh \
+  --app-name myapp \
+  --image-registry ghcr.io/myorg \
+  --namespace production
 ```
 
-Creates a Next.js app with:
-- TypeScript configuration
-- Monaco editor integration
-- Dockerfile for containerization
-- Kubernetes deployment manifests
+## When to Use
 
-### Deploy to Kubernetes
+- Deploying Next.js frontends to Kubernetes clusters
+- Creating apps with Monaco editor (VS Code in-browser)
+- LearnFlow platform pages (Landing, Dashboard, Code Editor, Chat, Quiz)
+- Projects requiring TypeScript + Tailwind CSS
+- Containerized React applications with health checks
 
-```bash
-./scripts/deploy.sh
-```
+## What This Generates
 
-### Verify Deployment
+**Next.js App Structure:**
+- TypeScript configuration with strict mode
+- App Router structure (`src/app/`)
+- Tailwind CSS with responsive design
+- Monaco editor with Python syntax highlighting
+- 8 LearnFlow page templates
 
-```bash
-./scripts/verify.sh
-```
+**Kubernetes Deployment:**
+- Multi-stage Dockerfile (deps → build → runtime)
+- Deployment, Service, Ingress manifests
+- HPA for autoscaling
+- Health check endpoints (/health, /ready)
 
-## Generated Structure
+## Success Criteria
 
-```
-my-app/
-├── src/
-│   ├── app/              # Next.js app router
-│   ├── components/       # React components
-│   │   └── MonacoEditor.tsx
-│   └── lib/              # Utilities
-├── public/               # Static assets
-├── Dockerfile            # Container image
-├── next.config.js        # Next.js config
-├── k8s-deployment.yaml   # Kubernetes deployment
-└── k8s-service.yaml      # Kubernetes service
-```
+| Criterion | Target |
+|-----------|--------|
+| Single-command deployment | `deploy.sh` |
+| Deployment time | < 3 minutes |
+| Monaco load time | < 2 seconds |
+| Bundle size | < 500KB gzipped |
+| SKILL.md size | < 1000 tokens |
 
-## Monaco Editor Integration
+## Script-Based Pattern
 
-### Component Usage
+This skill uses the MCP Code Execution pattern: scripts execute outside agent context and return minimal output for token efficiency.
 
-```tsx
-import { MonacoEditor } from '@/components/MonacoEditor';
+## References
 
-<MonacoEditor
-  language="python"
-  value={code}
-  onChange={setCode}
-  onRun={handleCodeExecution}
-  height="500px"
-/>
-```
-
-### Features
-
-- Python syntax highlighting
-- Auto-indentation
-- Code completion
-- Error highlighting
-- Console output panel
-
-## Deployment Options
-
-### Development
-
-```bash
-./scripts/deploy.sh --env dev
-```
-
-Uses: local build, hot reload, source maps
-
-### Production
-
-```bash
-./scripts/deploy.sh --env prod
-```
-
-Uses: optimized build, static export, CDN-ready
-
-### Custom Registry
-
-```bash
-./scripts/deploy.sh --registry ghcr.io --org myorg
-```
-
-## Environment Variables
-
-Configure via Kubernetes ConfigMap:
-
-```bash
-./scripts/deploy.sh --set NEXT_PUBLIC_API_URL=https://api.example.com
-```
-
-Standard variables:
-- `NEXT_PUBLIC_API_URL` - Backend API endpoint
-- `NEXT_PUBLIC_WS_URL` - WebSocket endpoint
-- `NODE_ENV` - Environment (development/production)
-
-## Scripts
-
-### generate.py
-
-Generate a new Next.js application.
-
-```bash
-# Basic app
-python scripts/generate.py --app-name my-app
-
-# With Monaco editor
-python scripts/generate.py --app-name my-app --monaco
-
-# With authentication
-python scripts/generate.py --app-name my-app --auth
-
-# TypeScript + Tailwind
-python scripts/generate.py --app-name my-app --typescript --tailwind
-```
-
-### deploy.sh
-
-Deploy to Kubernetes.
-
-```bash
-# Deploy with default options
-./scripts/deploy.sh
-
-# Deploy to specific namespace
-./scripts/deploy.sh --namespace production
-
-# Deploy with replica count
-./scripts/deploy.sh --replicas 3
-
-# Dry run
-./scripts/deploy.sh --dry-run
-```
-
-### verify.sh
-
-Verify deployment health.
-
-```bash
-# Check all pods
-./scripts/verify.sh
-
-# Get application URL
-./scripts/verify.sh --show-url
-
-# Port-forward for local access
-./scripts/verify.sh --port-forward
-```
-
-## Health Checks
-
-### Liveness Probe
-
-```yaml
-livenessProbe:
-  httpGet:
-    path: /api/health
-    port: 3000
-  initialDelaySeconds: 30
-  periodSeconds: 10
-```
-
-### Readiness Probe
-
-```yaml
-readinessProbe:
-  httpGet:
-    path: /api/ready
-    port: 3000
-  initialDelaySeconds: 10
-  periodSeconds: 5
-```
-
-## Performance Optimization
-
-### Build Optimizations
-
-- Automatic code splitting
-- Tree shaking
-- Image optimization
-- Font optimization
-- Bundle analysis
-
-### Production Settings
-
-```bash
-./scripts/deploy.sh --env prod --optimize
-```
-
-Enables:
-- Static generation where possible
-- Edge runtime support
-- Asset compression
-- CDN-friendly builds
-
-## Reference
-
-See [REFERENCE.md](references/REFERENCE.md) for:
-- Monaco editor configuration
-- Custom deployment strategies
-- Ingress configuration
-- TLS/certificate setup
+Deep documentation in `references/`:
+- `NEXTJS_ARCHITECTURE.md` - App Router patterns, static/dynamic routing
+- `MONACO_INTEGRATION.md` - Editor setup, Python highlighting, loading optimization
+- `KUBERNETES_DEPLOYMENT.md` - Manifest structure, HPA configuration, health probes
+- `BUILD_OPTIMIZATION.md` - Bundle analysis, code splitting, image optimization

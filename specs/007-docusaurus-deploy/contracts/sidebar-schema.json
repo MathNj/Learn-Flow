@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://learnflow.dev/schemas/sidebar.json",
+  "title": "Docusaurus Sidebar Configuration Schema",
+  "description": "Schema for Docusaurus sidebar navigation configuration",
+  "type": "object",
+  "patternProperties": {
+    "^[a-zA-Z0-9_-]+$": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/sidebarItem" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "sidebarItem": {
+      "oneOf": [
+        { "$ref": "#/definitions/docItem" },
+        { "$ref": "#/definitions/categoryItem" },
+        { "$ref": "#/definitions/linkItem" },
+        { "$ref": "#/definitions/htmlItem" }
+      ]
+    },
+    "docItem": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "const": "doc" },
+        "id": {
+          "type": "string",
+          "description": "Document ID (matches markdown filename without extension)"
+        },
+        "label": {
+          "type": "string",
+          "description": "Custom display label (defaults to doc title)"
+        }
+      }
+    },
+    "categoryItem": {
+      "type": "object",
+      "required": ["type", "label", "items"],
+      "properties": {
+        "type": { "const": "category" },
+        "label": {
+          "type": "string",
+          "description": "Category display name"
+        },
+        "collapsed": {
+          "type": "boolean",
+          "description": "Whether category is collapsed by default"
+        },
+        "collapsible": {
+          "type": "boolean",
+          "description": "Whether category can be collapsed"
+        },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/sidebarItem" }
+        }
+      }
+    },
+    "linkItem": {
+      "type": "object",
+      "required": ["type", "label", "href"],
+      "properties": {
+        "type": { "const": "link" },
+        "label": { "type": "string" },
+        "href": {
+          "type": "string",
+          "description": "External or internal URL"
+        }
+      }
+    },
+    "htmlItem": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "html" },
+        "value": {
+          "type": "string",
+          "description": "Raw HTML to render"
+        },
+        "defaultStyle": {
+          "type": "boolean",
+          "description": "Apply default styling"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "docsSidebar": [
+        {
+          "type": "category",
+          "label": "Getting Started",
+          "collapsed": false,
+          "items": [
+            { "type": "doc", "id": "installation" },
+            { "type": "doc", "id": "quick-start" }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "API Reference",
+          "items": [
+            { "type": "doc", "id": "api/rest" },
+            { "type": "doc", "id": "api/graphql" }
+          ]
+        }
+      ]
+    }
+  ]
+}

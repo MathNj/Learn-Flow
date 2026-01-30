@@ -1,0 +1,119 @@
+# Kafka Topics for LearnFlow Platform
+#
+# This file defines all Kafka topics required for the event-driven
+# architecture of the LearnFlow Python tutoring platform.
+#
+# Topics:
+# 1. learning.requests    - Incoming student questions (API Gateway -> Triage)
+# 2. concepts.requests    - Concept explanation requests (API Gateway -> Concepts Agent)
+# 3. code.submissions     - Code for review (API Gateway -> Code Review Agent)
+# 4. debug.requests       - Debug help requests (API Gateway -> Debug Agent)
+# 5. exercise.generated   - New exercises (Exercise Agent -> Progress Service)
+# 6. learning.responses   - AI agent responses (All Agents -> API Gateway)
+# 7. struggle.detected    - Student struggle alerts (Progress Service -> Notification Service)
+# 8. progress.events      - Progress update events (Code Execution -> Progress Service)
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: learning-requests
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "3600000"  # 1 hour
+    segment.ms: "86400000"    # 1 day
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: concepts-requests
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "3600000"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: code-submissions
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "3600000"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: debug-requests
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "3600000"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: exercise-generated
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "7200000"  # 2 hours for exercises
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: learning-responses
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "3600000"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: struggle-detected
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "604800000"  # 7 days for alerts
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: progress-events
+  namespace: learnflow
+  labels:
+    strimzi.io/cluster: learnflow-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "86400000"  # 1 day for progress events

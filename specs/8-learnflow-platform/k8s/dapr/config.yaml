@@ -1,0 +1,80 @@
+# Dapr Configuration for LearnFlow Platform
+#
+# This configuration enables Dapr sidecar injection and defines
+# pub/sub components for Kafka event-driven communication.
+
+---
+# Dapr system configuration (cluster-level)
+# Note: This would typically be installed via helm, but including for reference
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: learnflow-dapr-config
+  namespace: learnflow
+spec:
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://zipkin.istio-system.svc:9411/api/v2/spans"
+  features:
+    - name: Actor.Reentrancy
+      enabled: true
+---
+# Pub/Sub component for Kafka
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: learnflow-pubsub
+  namespace: learnflow
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka.learnflow.svc.cluster.local:9092"
+  - name: consumerGroup
+    value: "learnflow-services"
+  - name: authRequired
+    value: "false"
+---
+# State store component (Redis)
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: learnflow-state
+  namespace: learnflow
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: "redis.learnflow.svc.cluster.local:6379"
+  - name: redisPassword
+    secretKeyRef:
+      name: redis-password
+      key: password
+  - name: actorStateStore
+    value: "true"
+---
+# Secret store component
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: learnflow-secretstore
+  namespace: learnflow
+spec:
+  type: secretstores.kubernetes
+  version: v1
+  metadata:
+  - name: namespaces
+    value: "learnflow"
+---
+# Redis password secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-password
+  namespace: learnflow
+type: Opaque
+stringData:
+  password: "change-me-in-production"

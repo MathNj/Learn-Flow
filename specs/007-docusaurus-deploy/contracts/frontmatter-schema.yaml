@@ -1,0 +1,184 @@
+# YAML Frontmatter Schema for Docusaurus Documentation Pages
+# Version: 1.0.0
+# Description: Schema for markdown file frontmatter in Docusaurus docs
+
+---
+# Required fields
+id:
+  type: string
+  required: true
+  description: Unique identifier for the document (used in URLs and references)
+  pattern: "^[a-z0-9-]+$"
+  example: "installation-guide"
+
+title:
+  type: string
+  required: true
+  description: Page title displayed in browser tab, header, and search results
+  example: "Installation Guide"
+
+# Optional fields
+description:
+  type: string
+  required: false
+  description: SEO meta description for search engines
+  maxLength: 160
+  example: "Learn how to install LearnFlow on your local machine"
+
+slug:
+  type: string
+  required: false
+  description: Custom URL path (defaults to id if not specified)
+  pattern: "^/[a-z0-9-/]+$"
+  example: "/docs/installation"
+
+sidebar_label:
+  type: string
+  required: false
+  description: Custom label in sidebar navigation (defaults to title)
+  example: "Install"
+
+sidebar_position:
+  type: number
+  required: false
+  description: Position in sidebar (for manual ordering)
+  minimum: 1
+  example: 2
+
+sidebar_class_name:
+  type: string
+  required: false
+  description: CSS class name for sidebar item styling
+  example: "sidebar-item-featured"
+
+tags:
+  type: array
+  required: false
+  description: Tags for search and content categorization
+  items:
+    type: string
+  example: ["getting-started", "setup"]
+
+draft:
+  type: boolean
+  required: false
+  default: false
+  description: Exclude from production builds
+
+custom_edit_url:
+  type: string
+  required: false
+  description: Custom URL for "Edit this page" link (null to hide)
+  nullable: true
+  example: null
+
+hide_title:
+  type: boolean
+  required: false
+  default: false
+  description: Hide the page title header
+
+hide_table_of_contents:
+  type: boolean
+  required: false
+  default: false
+  description: Hide the table of contents
+
+toc_min_heading_level:
+  type: number
+  required: false
+  default: 2
+  minimum: 2
+  maximum: 6
+  description: Minimum heading level for table of contents
+
+toc_max_heading_level:
+  type: number
+  required: false
+  default: 3
+  minimum: 2
+  maximum: 6
+  description: Maximum heading level for table of contents
+
+pagination_next:
+  type: string
+  required: false
+  description: ID of next page (null to disable)
+  nullable: true
+  example: "quick-start"
+
+pagination_prev:
+  type: string
+  required: false
+  description: ID of previous page (null to disable)
+  nullable: true
+  example: null
+
+keywords:
+  type: array
+  required: false
+  description: SEO keywords for meta tags
+  items:
+    type: string
+  example: ["learnflow", "installation", "setup"]
+
+authors:
+  type: array
+  required: false
+  description: Page authors (for attribution)
+  items:
+    type: object
+    properties:
+      name: string
+      url: string
+      title: string
+  example:
+    - name: "John Doe"
+      url: "https://github.com/johndoe"
+      title: "Technical Writer"
+
+image:
+  type: string
+  required: false
+  description: Open Graph / Twitter card image
+  example: "img/og-image.png"
+
+---
+
+# Example Complete Frontmatter
+
+```yaml
+---
+id: installation
+title: Installation Guide
+description: Learn how to install LearnFlow on your local machine in minutes
+slug: /docs/getting-started/installation
+sidebar_label: Installation
+sidebar_position: 1
+tags:
+  - getting-started
+  - setup
+draft: false
+hide_title: false
+keywords:
+  - learnflow
+  - installation
+  - setup
+  - quick start
+authors:
+  - name: LearnFlow Team
+    url: https://learnflow.dev
+    title: Documentation Team
+image: img/og-installation.png
+---
+```
+
+# Minimal Frontmatter (Recommended for Most Pages)
+
+```yaml
+---
+id: page-id
+title: Page Title
+description: Brief description for SEO
+---
+```

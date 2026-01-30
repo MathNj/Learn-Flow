@@ -1,0 +1,75 @@
+"""
+Configuration module for {{ service_name }}.
+
+Loads configuration from environment variables.
+"""
+import os
+from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Application settings."""
+
+    # Application
+    APP_NAME: str = "{{ service_name }}"
+    APP_VERSION: str = "{{ version }}"
+    DEBUG: bool = False
+
+    # Server
+    HOST: str = "0.0.0.0"
+    PORT: int = {{ port }}
+
+    # Logging
+    LOG_LEVEL: str = "INFO"
+
+    # Dapr
+    DAPR_HOST: str = "localhost"
+    DAPR_HTTP_PORT: int = 3500
+    DAPR_GRPC_PORT: int = 50001
+
+    {% if has_agent %}
+    # OpenAI
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "{{ openai_model }}"
+    OPENAI_TEMPERATURE: float = 0.7
+    OPENAI_MAX_TOKENS: int = 2000
+    {% endif %}
+
+    {% if has_state %}
+    # State Store
+    STATE_STORE_NAME: str = "state-store"
+    STATE_TTL_SECONDS: int = {{ state_ttl or 86400 }}
+    {% endif %}
+
+    {% if has_pubsub %}
+    # Pub/Sub
+    PUBSUB_COMPONENT_NAME: str = "kafka-pubsub"
+    {% endif %}
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+    @property
+    def dapr_http_url(self) -> str:
+        """Get Dapr HTTP URL."""
+        return f"http://{self.DAPR_HOST}:{self.DAPR_HTTP_PORT}"
+
+    @property
+    def dapr_grpc_url(self) -> str:
+        """Get Dapr gRPC URL."""
+        return f"{self.DAPR_HOST}:{self.DAPR_GRPC_PORT}"
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
+
+
+# Global settings instance
+settings = get_settings()

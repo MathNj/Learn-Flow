@@ -1,0 +1,102 @@
+"""
+Health check endpoints for {{ service_name }}.
+
+Provides liveness and readiness probes for Kubernetes.
+"""
+import httpx
+from fastapi import APIRouter, HTTPException
+from app.core.config import settings
+from app.models.schemas import HealthResponse, ReadinessResponse
+
+router = APIRouter(prefix="/health", tags=["Health"])
+
+
+async def check_dapr_connection() -> bool:
+    """Check if Dapr sidecar is reachable."""
+    try:
+        async with httpx.AsyncClient(timeout=1.0) as client:
+            response = await client.get(f"{settings.dapr_http_url}/v1.0/healthz")
+            return response.status_code == 200
+    except Exception:
+        return False
+
+
+{% if has_state %}
+async def check_state_store() -> str:
+    """Check if state store is available."""
+    try:
+        async with httpx.AsyncClient(timeout=1.0) as client:
+            # Try to access Dapr state endpoint (will 404 but confirms connectivity)
+            response = await client.get(
+                f"{settings.dapr_http_url}/v1.0/state/{settings.STATE_STORE_NAME}/__health_check__"
+            )
+            return "ok" if response.status_code in (200, 404) else "error"
+    except Exception:
+        return "error"
+{% endif %}
+
+
+{% if has_pubsub %}
+async def check_pubsub() -> str:
+    """Check if pub/sub is available."""
+    try:
+        async with httpx.AsyncClient(timeout=1.0) as client:
+            # Try to access Dapr metadata (confirms connectivity)
+            response = await client.get(f"{settings.dapr_http_url}/v1.0/metadata")
+            return "ok" if response.status_code == 200 else "error"
+    except Exception:
+        return "error"
+{% endif %}
+
+
+@router.get("", response_model=HealthResponse)
+@router.get("/live", response_model=HealthResponse)
+async def liveness() -> HealthResponse:
+    """
+    Liveness probe endpoint.
+
+    Returns 200 if the service is running. This is a basic check that
+    the FastAPI application is responsive.
+    """
+    return HealthResponse(
+        status="healthy",
+        service=settings.APP_NAME,
+        version=settings.APP_VERSION,
+    )
+
+
+@router.get("/ready", response_model=ReadinessResponse)
+async def readiness() -> ReadinessResponse:
+    """
+    Readiness probe endpoint.
+
+    Returns 200 if the service is ready to accept traffic. This checks
+    connectivity to Dapr sidecar and other dependencies.
+    """
+    dapr_ok = await check_dapr_connection()
+
+    dependencies = {
+        "dapr": "ok" if dapr_ok else "error",
+    }
+
+    {% if has_state %}
+    state_ok = await check_state_store()
+    dependencies["state_store"] = state_ok
+    {% endif %}
+
+    {% if has_pubsub %}
+    pubsub_ok = await check_pubsub()
+    dependencies["pubsub"] = pubsub_ok
+    {% endif %}
+
+    # Service is ready if Dapr is connected
+    is_ready = dapr_ok
+
+    if not is_ready:
+        raise HTTPException(status_code=503, detail="Service not ready")
+
+    return ReadinessResponse(
+        status="ready",
+        dapr_connected=dapr_ok,
+        dependencies=dependencies,
+    )

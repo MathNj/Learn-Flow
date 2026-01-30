@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ service_name }}
+  labels:
+    app: {{ service_name }}
+    version: "{{ version }}"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: {{ service_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ service_name }}
+        version: "{{ version }}"
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "{{ service_name }}"
+        dapr.io/app-port: "{{ port }}"
+        dapr.io/config: "appconfig"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ port }}"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: {{ service_name }}
+        image: {{ service_name }}:{{ version }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: {{ port }}
+          name: http
+          protocol: TCP
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        envFrom:
+        - configMapRef:
+            name: {{ service_name }}-config
+        {% if has_agent %}
+        - secretRef:
+            name: {{ service_name }}-secrets
+        {% endif %}
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: {{ port }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: {{ port }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false

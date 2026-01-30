@@ -1,0 +1,230 @@
+---
+# Debug Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: debug-agent
+  namespace: learnflow
+  labels:
+    app: debug-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8004
+      targetPort: 8004
+      name: http
+  selector:
+    app: debug-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-agent
+  namespace: learnflow
+  labels:
+    app: debug-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: debug-agent
+  template:
+    metadata:
+      labels:
+        app: debug-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "debug-agent"
+        dapr.io/app-port: "8004"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: debug-agent
+        image: learnflow/debug-agent:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8004
+          name: http
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Exercise Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: exercise-agent
+  namespace: learnflow
+  labels:
+    app: exercise-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8005
+      targetPort: 8005
+      name: http
+  selector:
+    app: exercise-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exercise-agent
+  namespace: learnflow
+  labels:
+    app: exercise-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: exercise-agent
+  template:
+    metadata:
+      labels:
+        app: exercise-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "exercise-agent"
+        dapr.io/app-port: "8005"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: exercise-agent
+        image: learnflow/exercise-agent:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8005
+          name: http
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8005
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8005
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Progress Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: progress-service
+  namespace: learnflow
+  labels:
+    app: progress-service
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8006
+      targetPort: 8006
+      name: http
+  selector:
+    app: progress-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: progress-service
+  namespace: learnflow
+  labels:
+    app: progress-service
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: progress-service
+  template:
+    metadata:
+      labels:
+        app: progress-service
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "progress-service"
+        dapr.io/app-port: "8006"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: progress-service
+        image: learnflow/progress-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8006
+          name: http
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: database_url
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8006
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8006
+          initialDelaySeconds: 5
+          periodSeconds: 10

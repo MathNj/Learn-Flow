@@ -1,0 +1,16 @@
+"""
+Event handler registration for {{ service_name }}.
+
+Called during app startup to register Dapr pub/sub subscribers.
+"""
+import logging
+from fastapi import FastAPI
+
+log = logging.getLogger(__name__)
+
+
+def register_subscribers(app: FastAPI):
+    """Register pub/sub subscribers with the FastAPI app."""
+    from app.services.pubsub import register_subscribers as reg
+    reg(app)
+    log.info("Event handlers registered")

@@ -1,0 +1,227 @@
+---
+# Triage Service Deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: triage-service
+  namespace: learnflow
+  labels:
+    app: triage-service
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8001
+      targetPort: 8001
+      name: http
+      protocol: TCP
+  selector:
+    app: triage-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: triage-service
+  namespace: learnflow
+  labels:
+    app: triage-service
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: triage-service
+  template:
+    metadata:
+      labels:
+        app: triage-service
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "triage-service"
+        dapr.io/app-port: "8001"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: triage-service
+        image: learnflow/triage-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8001
+          name: http
+          protocol: TCP
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Concepts Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: concepts-agent
+  namespace: learnflow
+  labels:
+    app: concepts-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8002
+      targetPort: 8002
+      name: http
+  selector:
+    app: concepts-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: concepts-agent
+  namespace: learnflow
+  labels:
+    app: concepts-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: concepts-agent
+  template:
+    metadata:
+      labels:
+        app: concepts-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "concepts-agent"
+        dapr.io/app-port: "8002"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: concepts-agent
+        image: learnflow/concepts-agent:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8002
+          name: http
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+# Code Review Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-review-agent
+  namespace: learnflow
+  labels:
+    app: code-review-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8003
+      targetPort: 8003
+      name: http
+  selector:
+    app: code-review-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-review-agent
+  namespace: learnflow
+  labels:
+    app: code-review-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: code-review-agent
+  template:
+    metadata:
+      labels:
+        app: code-review-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "code-review-agent"
+        dapr.io/app-port: "8003"
+        dapr.io/config: "learnflow-dapr-config"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+      - name: code-review-agent
+        image: learnflow/code-review-agent:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8003
+          name: http
+        env:
+        - name: DAPR_PUBSUB_NAME
+          value: "learnflow-pubsub"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 5
+          periodSeconds: 10

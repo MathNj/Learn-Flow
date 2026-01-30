@@ -1,0 +1,731 @@
+# LearnFlow Microservices
+# Kubernetes Deployments and Services for all LearnFlow components
+
+---
+# Triage Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: triage-service
+  namespace: learnflow
+  labels:
+    app: triage-service
+    component: routing
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: triage-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: triage-service
+  namespace: learnflow
+  labels:
+    app: triage-service
+    component: routing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: triage-service
+  template:
+    metadata:
+      labels:
+        app: triage-service
+        component: routing
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "triage-service"
+        dapr.io/app-port: "8000"
+        dapr.io/log-level: "info"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: triage-service
+          image: learnflow/triage-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Concepts Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: concepts-agent
+  namespace: learnflow
+  labels:
+    app: concepts-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8001
+      targetPort: 8001
+      protocol: TCP
+      name: http
+  selector:
+    app: concepts-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: concepts-agent
+  namespace: learnflow
+  labels:
+    app: concepts-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: concepts-agent
+  template:
+    metadata:
+      labels:
+        app: concepts-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "concepts-agent"
+        dapr.io/app-port: "8001"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: concepts-agent
+          image: learnflow/concepts-agent:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Code Review Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-review-agent
+  namespace: learnflow
+  labels:
+    app: code-review-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8003
+      targetPort: 8003
+      protocol: TCP
+      name: http
+  selector:
+    app: code-review-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-review-agent
+  namespace: learnflow
+  labels:
+    app: code-review-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: code-review-agent
+  template:
+    metadata:
+      labels:
+        app: code-review-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "code-review-agent"
+        dapr.io/app-port: "8003"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: code-review-agent
+          image: learnflow/code-review-agent:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8003
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Debug Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: debug-agent
+  namespace: learnflow
+  labels:
+    app: debug-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8004
+      targetPort: 8004
+      protocol: TCP
+      name: http
+  selector:
+    app: debug-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-agent
+  namespace: learnflow
+  labels:
+    app: debug-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: debug-agent
+  template:
+    metadata:
+      labels:
+        app: debug-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "debug-agent"
+        dapr.io/app-port: "8004"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: debug-agent
+          image: learnflow/debug-agent:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8004
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Exercise Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: exercise-agent
+  namespace: learnflow
+  labels:
+    app: exercise-agent
+    component: ai-agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8005
+      targetPort: 8005
+      protocol: TCP
+      name: http
+  selector:
+    app: exercise-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exercise-agent
+  namespace: learnflow
+  labels:
+    app: exercise-agent
+    component: ai-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: exercise-agent
+  template:
+    metadata:
+      labels:
+        app: exercise-agent
+        component: ai-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "exercise-agent"
+        dapr.io/app-port: "8005"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: exercise-agent
+          image: learnflow/exercise-agent:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8005
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Progress Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: progress-service
+  namespace: learnflow
+  labels:
+    app: progress-service
+    component: analytics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8006
+      targetPort: 8006
+      protocol: TCP
+      name: http
+  selector:
+    app: progress-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: progress-service
+  namespace: learnflow
+  labels:
+    app: progress-service
+    component: analytics
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: progress-service
+  template:
+    metadata:
+      labels:
+        app: progress-service
+        component: analytics
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "progress-service"
+        dapr.io/app-port: "8006"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: progress-service
+          image: learnflow/progress-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8006
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: database-url
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8006
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8006
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Code Execution Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-execution-service
+  namespace: learnflow
+  labels:
+    app: code-execution-service
+    component: execution
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8007
+      targetPort: 8007
+      protocol: TCP
+      name: http
+  selector:
+    app: code-execution-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-execution-service
+  namespace: learnflow
+  labels:
+    app: code-execution-service
+    component: execution
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: code-execution-service
+  template:
+    metadata:
+      labels:
+        app: code-execution-service
+        component: execution
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "code-execution-service"
+        dapr.io/app-port: "8007"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: code-execution-service
+          image: learnflow/code-execution-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8007
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+            - name: EXECUTION_TIMEOUT
+              value: "5"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8007
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8007
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Notification Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: learnflow
+  labels:
+    app: notification-service
+    component: notification
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8009
+      targetPort: 8009
+      protocol: TCP
+      name: http
+  selector:
+    app: notification-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: learnflow
+  labels:
+    app: notification-service
+    component: notification
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+        component: notification
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "notification-service"
+        dapr.io/app-port: "8009"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: notification-service
+          image: learnflow/notification-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8009
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8009
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8009
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# API Gateway
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: learnflow
+  labels:
+    app: api-gateway
+    component: gateway
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: api-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: learnflow
+  labels:
+    app: api-gateway
+    component: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        component: gateway
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "api-gateway"
+        dapr.io/app-port: "8080"
+    spec:
+      serviceAccountName: learnflow-sa
+      containers:
+        - name: api-gateway
+          image: learnflow/api-gateway:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: DAPR_PUBSUB_NAME
+              value: "learnflow-pubsub"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: api-gateway-secret
+                  key: jwt-secret
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# HorizontalPodAutoscaler for API Gateway
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway-hpa
+  namespace: learnflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# HorizontalPodAutoscaler for Code Execution Service
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: code-execution-hpa
+  namespace: learnflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: code-execution-service
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

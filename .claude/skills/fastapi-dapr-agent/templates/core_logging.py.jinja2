@@ -1,0 +1,120 @@
+"""
+Structured logging module for {{ service_name }}.
+
+Provides JSON-formatted logging with request ID tracking.
+"""
+import logging
+import sys
+import time
+import uuid
+from contextvars import ContextVar
+from datetime import datetime
+from typing import Any, Dict
+
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+
+# Context variable for request ID
+request_id_ctx: ContextVar[str] = ContextVar("request_id", default="")
+
+
+class JSONFormatter(logging.Formatter):
+    """JSON formatter for structured logging."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format log record as JSON."""
+        import json
+
+        log_data: Dict[str, Any] = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "request_id": request_id_ctx.get(),
+        }
+
+        # Add exception info if present
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+
+        # Add extra fields
+        if hasattr(record, "duration_ms"):
+            log_data["duration_ms"] = record.duration_ms
+
+        return json.dumps(log_data)
+
+
+def setup_logging(level: str = "INFO"):
+    """Setup structured logging for the application."""
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+
+    # Clear existing handlers
+    root_logger.handlers.clear()
+
+    # Console handler with JSON formatter
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JSONFormatter())
+    root_logger.addHandler(handler)
+
+
+def get_request_id() -> str:
+    """Get or generate request ID."""
+    rid = request_id_ctx.get()
+    if not rid:
+        rid = str(uuid.uuid4())[:8]
+        request_id_ctx.set(rid)
+    return rid
+
+
+class LoggingMiddleware(BaseHTTPMiddleware):
+    """Middleware for request logging with timing."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+        """Process request and log with timing."""
+        # Generate request ID
+        rid = str(uuid.uuid4())[:8]
+        request_id_ctx.set(rid)
+
+        # Log request start
+        logger = logging.getLogger(__name__)
+        logger.info(
+            "request_started",
+            extra={"request_id": rid, "method": request.method, "path": request.url.path}
+        )
+
+        # Process request
+        start_time = time.time()
+        try:
+            response = await call_next(request)
+            duration_ms = (time.time() - start_time) * 1000
+
+            # Log request completion
+            logger.info(
+                "request_completed",
+                extra={
+                    "request_id": rid,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": response.status_code,
+                    "duration_ms": duration_ms,
+                }
+            )
+            return response
+
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+
+            # Log request error
+            logger.error(
+                "request_failed",
+                extra={
+                    "request_id": rid,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "error": str(e),
+                    "duration_ms": duration_ms,
+                },
+                exc_info=True,
+            )
+            raise

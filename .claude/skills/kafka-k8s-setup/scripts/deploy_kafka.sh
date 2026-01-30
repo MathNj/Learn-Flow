@@ -1,0 +1,360 @@
+#!/usr/bin/env bash
+# deploy_kafka.sh - Deploy Apache Kafka on Kubernetes using Bitnami Helm chart
+# Part of kafka-k8s-setup skill
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
+
+# ============================================
+# Default Values
+# ============================================
+
+RELEASE_NAME="${DEFAULT_RELEASE}"
+NAMESPACE="${DEFAULT_NAMESPACE}"
+REPLICAS="${DEFAULT_REPLICAS}"
+TIMEOUT="${DEFAULT_TIMEOUT}"
+PERSISTENCE_ENABLED="false"
+PERSISTENCE_SIZE=""
+EXTERNAL_ACCESS="false"
+SKIP_TOPICS="false"
+DRY_RUN="false"
+VERBOSE="false"
+
+# ============================================
+# Usage Function
+# ============================================
+
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Deploy Apache Kafka on Kubernetes using Bitnami Helm chart.
+
+OPTIONS:
+  -r, --release-name NAME    Helm release name (default: ${DEFAULT_RELEASE})
+  -n, --namespace NAME        Kubernetes namespace (default: ${DEFAULT_NAMESPACE})
+      --replicas COUNT        Number of broker replicas (default: ${DEFAULT_REPLICAS})
+      --persist SIZE          Enable persistence with PVC size (e.g., 8Gi)
+      --external-access       Enable external LoadBalancer access
+      --skip-topics           Skip automatic topic creation
+      --timeout SECONDS       Deployment timeout in seconds (default: ${DEFAULT_TIMEOUT})
+      --dry-run               Show commands without executing
+  -v, --verbose               Enable detailed logging
+  -h, --help                  Show this help message
+
+EXAMPLES:
+  # Deploy with defaults (dev: 1 replica, no persistence)
+  $0
+
+  # Deploy with 3 replicas and persistence
+  $0 --replicas 3 --persist 8Gi
+
+  # Deploy with external access for production
+  $0 --replicas 3 --persist 8Gi --external-access
+
+  # Dry run to see what would be executed
+  $0 --dry-run --verbose
+
+EOF
+    exit 0
+}
+
+# ============================================
+# Argument Parsing (T013)
+# ============================================
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -r|--release-name)
+                RELEASE_NAME="$2"
+                shift 2
+                ;;
+            -n|--namespace)
+                NAMESPACE="$2"
+                shift 2
+                ;;
+            --replicas)
+                REPLICAS="$2"
+                shift 2
+                ;;
+            --persist)
+                PERSISTENCE_ENABLED="true"
+                PERSISTENCE_SIZE="$2"
+                shift 2
+                ;;
+            --external-access)
+                EXTERNAL_ACCESS="true"
+                shift
+                ;;
+            --skip-topics)
+                SKIP_TOPICS="true"
+                shift
+                ;;
+            --timeout)
+                TIMEOUT="$2"
+                shift 2
+                ;;
+            --dry-run)
+                DRY_RUN="true"
+                export DRY_RUN
+                shift
+                ;;
+            -v|--verbose)
+                VERBOSE="true"
+                export VERBOSE
+                shift
+                ;;
+            -h|--help)
+                usage
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                usage
+                ;;
+        esac
+    done
+}
+
+# ============================================
+# Validation
+# ============================================
+
+validate_args() {
+    # Validate replica count
+    if ! [[ "$REPLICAS" =~ ^[0-9]+$ ]] || [[ "$REPLICAS" -lt 1 ]]; then
+        die "Replica count must be >= 1" "$EXIT_ERROR"
+    fi
+
+    # Validate namespace name (Kubernetes naming rules)
+    if ! [[ "$NAMESPACE" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]]; then
+        die "Invalid namespace name: $NAMESPACE. Use lowercase alphanumeric with hyphens." "$EXIT_ERROR"
+    fi
+
+    # Validate persistence size if provided
+    if [[ "$PERSISTENCE_ENABLED" == "true" ]]; then
+        validate_size "$PERSISTENCE_SIZE" || die "Invalid persistence size: $PERSISTENCE_SIZE" "$EXIT_ERROR"
+    fi
+
+    # Validate timeout
+    if ! [[ "$TIMEOUT" =~ ^[0-9]+$ ]]; then
+        die "Timeout must be a number" "$EXIT_ERROR"
+    fi
+}
+
+# ============================================
+# Namespace Creation (T014)
+# ============================================
+
+create_namespace() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log_info "DRY RUN: Would create namespace: $NAMESPACE"
+        return 0
+    fi
+
+    if namespace_exists "$NAMESPACE"; then
+        log_info "Namespace '$NAMESPACE' already exists"
+    else
+        log_info "Creating namespace: $NAMESPACE"
+        kubectl create namespace "$NAMESPACE" 2>&1 | log_debug_or_cat
+    fi
+}
+
+# ============================================
+# Generate Helm Values (T015, T039-T044)
+# ============================================
+
+generate_helm_values() {
+    local values_file
+    values_file=$(create_values_file)
+
+    cat > "$values_file" << EOF
+# Kafka deployment values generated by deploy_kafka.sh
+# Release: $RELEASE_NAME
+# Namespace: $NAMESPACE
+
+# Replica configuration
+replicaCount: ${REPLICAS}
+
+# Persistence settings
+persistence:
+  enabled: ${PERSISTENCE_ENABLED}
+EOF
+
+    if [[ "$PERSISTENCE_ENABLED" == "true" && -n "$PERSISTENCE_SIZE" ]]; then
+        cat >> "$values_file" << EOF
+  size: ${PERSISTENCE_SIZE}
+EOF
+    fi
+
+    # External access configuration
+    cat >> "$values_file" << EOF
+
+# External access
+externalAccess:
+  enabled: ${EXTERNAL_ACCESS}
+EOF
+
+    if [[ "$EXTERNAL_ACCESS" == "true" ]]; then
+        cat >> "$values_file" << EOF
+  service:
+    type: LoadBalancer
+    ports:
+      external: 9094
+EOF
+    fi
+
+    # Resource limits (T042)
+    if [[ "$REPLICAS" -gt 1 ]]; then
+        cat >> "$values_file" << EOF
+
+# Resource limits for production
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+EOF
+    fi
+
+    # Disable auto topic creation (we create topics explicitly)
+    cat >> "$values_file" << EOF
+
+# Topic configuration
+autoCreateTopicsEnable: false
+EOF
+
+    echo "$values_file"
+}
+
+# ============================================
+# Add Helm Repository
+# ============================================
+
+add_helm_repository() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log_info "DRY RUN: Would add Bitnami Helm repository"
+        return 0
+    fi
+
+    log_info "Adding Bitnami Helm repository..."
+
+    if helm repo list 2>/dev/null | grep -q "^bitnami"; then
+        log_info "Bitnami repository already exists. Updating..."
+        helm repo update bitnami 2>&1 | log_debug_or_cat
+    else
+        helm repo add bitnami https://charts.bitnami.com/bitnami 2>&1 | log_debug_or_cat
+        helm repo update bitnami 2>&1 | log_debug_or_cat
+    fi
+}
+
+# ============================================
+# Main Deployment (T015, T016)
+# ============================================
+
+deploy_kafka() {
+    local values_file
+    values_file=$(generate_helm_values)
+
+    # Trap to clean up values file
+    trap "cleanup '$values_file'" EXIT
+
+    if [[ "$VERBOSE" == "true" ]]; then
+        log_debug "Helm values file:"
+        cat "$values_file" >&2
+    fi
+
+    # Build Helm install command
+    local helm_cmd=(
+        helm upgrade "$RELEASE_NAME" "$DEFAULT_CHART"
+        --install
+        --namespace "$NAMESPACE"
+        --version "$DEFAULT_CHART_VERSION"
+        --wait
+        --timeout "${TIMEOUT}s"
+        --values "$values_file"
+    )
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        helm_cmd+=(--dry-run --debug)
+        log_info "DRY RUN: ${helm_cmd[*]}"
+        return 0
+    fi
+
+    log_info "Installing Kafka release: $RELEASE_NAME"
+    "${helm_cmd[@]}" 2>&1 | log_debug_or_cat
+
+    # Wait for pods to be ready
+    log_info "Waiting for Kafka pods to be ready..."
+    wait_for_pods "$NAMESPACE" "app.kubernetes.io/name=kafka" "$TIMEOUT"
+
+    log_success "Kafka deployed successfully!"
+}
+
+# ============================================
+# Output Connection String (T017)
+# ============================================
+
+print_connection_info() {
+    local bootstrap_server
+    bootstrap_server=$(get_bootstrap_server "$RELEASE_NAME" "$NAMESPACE")
+
+    echo ""
+    echo "=== Kafka Deployment Complete ==="
+    echo "Release: $RELEASE_NAME"
+    echo "Namespace: $NAMESPACE"
+    echo "Replicas: $REPLICAS"
+    echo "Persistence: $PERSISTENCE_ENABLED"
+    echo ""
+    echo "Bootstrap Server:"
+    echo "  $bootstrap_server"
+    echo ""
+
+    if [[ "$EXTERNAL_ACCESS" == "true" ]]; then
+        local external_host
+        if external_host=$(get_external_host "$RELEASE_NAME" "$NAMESPACE" 2>/dev/null); then
+            echo "External Access:"
+            echo "  $external_host"
+            echo ""
+        fi
+    fi
+
+    # Get pod status
+    local pod_status
+    pod_status=$(get_pod_counts "$NAMESPACE" "app.kubernetes.io/name=kafka")
+    echo "Pods: $pod_status"
+    echo ""
+}
+
+# ============================================
+# Main Function
+# ============================================
+
+main() {
+    parse_args "$@"
+    validate_args
+
+    # Pre-flight checks
+    check_helm_installed
+    check_kubectl_installed
+    check_cluster_accessible
+
+    # Add Helm repository
+    add_helm_repository
+
+    # Create namespace
+    create_namespace
+
+    # Deploy Kafka
+    deploy_kafka
+
+    # Print connection info
+    print_connection_info
+}
+
+# Execute main function
+main "$@"

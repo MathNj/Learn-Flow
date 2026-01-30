@@ -1,0 +1,275 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://learnflow.dev/schemas/docusaurus-config.json",
+  "title": "Docusaurus Configuration Schema",
+  "description": "Configuration schema for Docusaurus documentation site",
+  "type": "object",
+  "required": ["title", "url", "baseUrl", "i18n", "presets", "themeConfig"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Site title displayed in navbar and page metadata"
+    },
+    "tagline": {
+      "type": "string",
+      "description": "Site tagline or subtitle"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Full production URL (e.g., https://learnflow.dev)"
+    },
+    "baseUrl": {
+      "type": "string",
+      "pattern": "^/.*$",
+      "description": "Base URL path (must start with /, usually '/' for root deployment)"
+    },
+    "favicon": {
+      "type": "string",
+      "description": "Path to favicon file relative to static directory"
+    },
+    "organizationName": {
+      "type": "string",
+      "description": "GitHub organization or user name for deployment"
+    },
+    "projectName": {
+      "type": "string",
+      "description": "Repository name for deployment"
+    },
+    "deploymentBranch": {
+      "type": "string",
+      "default": "gh-pages",
+      "description": "Git branch for deployment"
+    },
+    "trailingSlash": {
+      "type": "boolean",
+      "description": "Whether to add trailing slashes to URLs"
+    },
+    "i18n": {
+      "type": "object",
+      "required": ["defaultLocale", "locales"],
+      "properties": {
+        "defaultLocale": {
+          "type": "string",
+          "default": "en"
+        },
+        "locales": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "presets": {
+      "type": "array",
+      "description": "Docusaurus presets configuration"
+    },
+    "themes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional themes to load"
+    },
+    "plugins": {
+      "type": "array",
+      "description": "Docusaurus plugins configuration"
+    },
+    "themeConfig": {
+      "$ref": "#/definitions/themeConfig"
+    },
+    "markdown": {
+      "$ref": "#/definitions/markdownConfig"
+    },
+    "onBrokenLinks": {
+      "type": "string",
+      "enum": ["throw", "warn", "ignore"],
+      "default": "throw",
+      "description": "Behavior when broken links are detected"
+    },
+    "onBrokenMarkdownLinks": {
+      "type": "string",
+      "enum": ["throw", "warn", "ignore"],
+      "default": "warn",
+      "description": "Behavior when broken markdown links are detected"
+    }
+  },
+  "definitions": {
+    "themeConfig": {
+      "type": "object",
+      "properties": {
+        "navbar": {
+          "$ref": "#/definitions/navbarConfig"
+        },
+        "footer": {
+          "$ref": "#/definitions/footerConfig"
+        },
+        "prism": {
+          "$ref": "#/definitions/prismConfig"
+        },
+        "mermaid": {
+          "$ref": "#/definitions/mermaidConfig"
+        },
+        "algolia": {
+          "$ref": "#/definitions/algoliaConfig"
+        }
+      }
+    },
+    "navbarConfig": {
+      "type": "object",
+      "properties": {
+        "hideOnScroll": { "type": "boolean" },
+        "style": { "type": "string", "enum": ["primary", "dark"] },
+        "logo": {
+          "type": "object",
+          "properties": {
+            "alt": { "type": "string" },
+            "src": { "type": "string" },
+            "srcDark": { "type": "string" },
+            "href": { "type": "string" },
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/navItem" }
+        }
+      }
+    },
+    "navItem": {
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "to", "label"],
+          "properties": {
+            "type": { "const": "link" },
+            "to": { "type": "string" },
+            "label": { "type": "string" },
+            "position": { "type": "string", "enum": ["left", "right"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "docId"],
+          "properties": {
+            "type": { "const": "doc" },
+            "docId": { "type": "string" },
+            "label": { "type": "string" },
+            "position": { "type": "string", "enum": ["left", "right"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "sidebarId"],
+          "properties": {
+            "type": { "const": "docSidebar" },
+            "sidebarId": { "type": "string" },
+            "label": { "type": "string" },
+            "position": { "type": "string", "enum": ["left", "right"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "label", "items"],
+          "properties": {
+            "type": { "const": "dropdown" },
+            "label": { "type": "string" },
+            "items": { "type": "array", "items": { "$ref": "#/definitions/navItem" } },
+            "position": { "type": "string", "enum": ["left", "right"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "search" },
+            "position": { "type": "string", "enum": ["left", "right"] }
+          }
+        }
+      ]
+    },
+    "footerConfig": {
+      "type": "object",
+      "properties": {
+        "style": { "type": "string", "enum": ["dark", "light"] },
+        "logo": {
+          "type": "object",
+          "properties": {
+            "alt": { "type": "string" },
+            "src": { "type": "string" },
+            "href": { "type": "string" },
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": { "type": "string" },
+                    "to": { "type": "string" },
+                    "href": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "copyright": { "type": "string" }
+      }
+    },
+    "prismConfig": {
+      "type": "object",
+      "properties": {
+        "theme": { "type": "string" },
+        "darkTheme": { "type": "string" },
+        "defaultLanguage": { "type": "string" },
+        "additionalLanguages": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "mermaidConfig": {
+      "type": "object",
+      "properties": {
+        "theme": {
+          "type": "object",
+          "properties": {
+            "light": { "type": "string" },
+            "dark": { "type": "string" }
+          }
+        }
+      }
+    },
+    "algoliaConfig": {
+      "type": "object",
+      "required": ["appId", "apiKey", "indexName"],
+      "properties": {
+        "appId": { "type": "string", "description": "Algolia Application ID" },
+        "apiKey": { "type": "string", "description": "Algolia Search-only API Key" },
+        "indexName": { "type": "string", "description": "Algolia Index Name" },
+        "contextualSearch": { "type": "boolean" },
+        "searchParameters": {
+          "type": "object",
+          "properties": {
+            "facetFilters": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "markdownConfig": {
+      "type": "object",
+      "properties": {
+        "mermaid": { "type": "boolean" },
+        "format": { "type": "string", "enum": ["detect", "mdx", "markdown"] }
+      }
+    }
+  }
+}

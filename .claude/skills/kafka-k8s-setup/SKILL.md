@@ -1,131 +1,53 @@
 ---
 name: kafka-k8s-setup
-description: Deploy Apache Kafka on Kubernetes using Helm. Use when setting up event-driven microservices, deploying Kafka clusters, or creating Kafka topics for pub/sub messaging. Works with Minikube, AKS, GKE, and any Kubernetes cluster with Helm.
+description: Deploy Apache Kafka on Kubernetes using Bitnami Helm chart. Use when setting up event-driven microservices, creating Kafka topics, or deploying messaging infrastructure on K8s clusters (Minikube, AKS, GKE, EKS).
+version: 1.0.0
+tags: [kafka, kubernetes, helm, messaging, events]
 ---
 
 # Kafka Kubernetes Setup
 
-Deploy Apache Kafka on Kubernetes with automatic topic creation and health verification.
-
-## When to Use
-
-- Setting up event-driven architecture
-- Deploying Kafka for microservices
-- Creating Kafka topics for pub/sub
-- Verifying Kafka cluster health
+Deploy Apache Kafka on Kubernetes with a single command.
 
 ## Quick Start
 
-### Deploy Kafka
-
 ```bash
-./scripts/deploy.sh
+# Deploy Kafka (dev defaults: 1 replica, no persistence)
+.claude/skills/kafka-k8s-setup/scripts/deploy_kafka.sh
+
+# Deploy with production settings
+.claude/skills/kafka-k8s-setup/scripts/deploy_kafka.sh --replicas 3 --persist 8Gi --external-access
+
+# Verify health
+.claude/skills/kafka-k8s-setup/scripts/verify_kafka.sh
+
+# Create topics manually
+.claude/skills/kafka-k8s-setup/scripts/create_topics.sh
+
+# Cleanup
+.claude/skills/kafka-k8s-setup/scripts/undeploy_kafka.sh
 ```
 
-This installs Kafka using the Bitnami Helm chart into the `kafka` namespace.
+## Options
 
-### Create Topics
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--release-name` | my-kafka | Helm release name |
+| `--namespace` | kafka | Kubernetes namespace |
+| `--replicas` | 1 | Broker replicas |
+| `--persist` | off | PVC size (e.g., 8Gi) |
+| `--external-access` | false | Enable LoadBalancer |
+| `--dry-run` | false | Show commands only |
 
-```bash
-./scripts/create-topic.sh learning.requests 3
-./scripts/create-topic.sh code.submissions 3
-./scripts/create-topic.sh exercise.generated 3
-./scripts/create-topic.sh struggle.detected 3
-```
+## Topics Created
 
-### Verify Deployment
+learning.{requests,responses}, code.{submissions,reviews}, exercise.{generated,attempts}, struggle.{detected,resolved}
 
-```bash
-./scripts/verify.sh
-```
+## Connection String
 
-## Default Configuration
+`my-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092`
 
-| Setting | Value | Description |
-|---------|-------|-------------|
-| Namespace | `kafka` | Kubernetes namespace |
-| Replica Count | `1` | Kafka brokers (dev) |
-| Zookeeper Replicas | `1` | Zookeeper nodes (dev) |
-| Storage | `10Gi` | Persistent volume size |
+## References
 
-## Connection Details
-
-After deployment, connect using:
-
-```
-Bootstrap server: kafka.kafka.svc.cluster.local:9092
-```
-
-For local development (Minikube):
-```bash
-kubectl port-forward -n kafka svc/kafka 9092:9092
-```
-
-## Scripts
-
-### deploy.sh
-
-Deploy Kafka to Kubernetes.
-
-```bash
-# Default deployment
-./scripts/deploy.sh
-
-# Custom replica count
-./scripts/deploy.sh --replicas 3
-
-# Custom namespace
-./scripts/deploy.sh --namespace my-kafka
-
-# Dry run
-./scripts/deploy.sh --dry-run
-```
-
-### create-topic.sh
-
-Create Kafka topics.
-
-```bash
-# Create topic with default partitions (3)
-./scripts/create-topic.sh my-topic
-
-# Custom partitions
-./scripts/create-topic.sh my-topic 5
-
-# Custom replication factor
-./scripts/create-topic.sh my-topic 3 2
-```
-
-### verify.sh
-
-Verify Kafka health.
-
-```bash
-# Check all pods
-./scripts/verify.sh
-
-# Check specific namespace
-./scripts/verify.sh --namespace kafka
-
-# Detailed status
-./scripts/verify.sh --verbose
-```
-
-## Standard Topics
-
-LearnFlow standard topics:
-
-| Topic | Partitions | Purpose |
-|-------|------------|---------|
-| learning.requests | 3 | Student learning queries |
-| code.submissions | 3 | Code for review |
-| exercise.generated | 3 | New exercises |
-| struggle.detected | 1 | Teacher alerts |
-
-## Troubleshooting
-
-See [REFERENCE.md](references/REFERENCE.md) for:
-- Common deployment issues
-- Topic configuration options
-- Security setup
-- Production tuning
+- `references/bitnami_kafka_values.md` - Helm value overrides
+- `references/kafka_topics.md` - Topic patterns
