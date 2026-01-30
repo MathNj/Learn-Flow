@@ -10,16 +10,17 @@ import os
 from pathlib import Path
 
 # Service configuration: (name, port, script_path)
+# Ports changed to avoid conflicts with Odoo (8000, 8080) and Kafka UI (8080)
 SERVICES = [
-    ("Triage Service", 8000, "triage-service/main.py"),
-    ("Concepts Agent", 8001, "concepts-agent/main.py"),
-    ("Code Review Agent", 8003, "code-review-agent/main.py"),
-    ("Debug Agent", 8004, "debug-agent/main.py"),
-    ("Exercise Agent", 8005, "exercise-agent/main.py"),
-    ("Progress Service", 8006, "progress-service/main.py"),
-    ("Code Execution", 8007, "code-execution/main.py"),
-    ("Notification Service", 8009, "notification-service/main.py"),
-    ("API Gateway", 8080, "api-gateway/main.py"),
+    ("Triage Service", 8100, "triage-service/main.py"),
+    ("Concepts Agent", 8101, "concepts-agent/main.py"),
+    ("Code Review Agent", 8103, "code-review-agent/main.py"),
+    ("Debug Agent", 8104, "debug-agent/main.py"),
+    ("Exercise Agent", 8105, "exercise-agent/main.py"),
+    ("Progress Service", 8106, "progress-service/main.py"),
+    ("Code Execution", 8107, "code-execution/main.py"),
+    ("Notification Service", 8109, "notification-service/main.py"),
+    ("API Gateway", 8180, "api-gateway/main.py"),
 ]
 
 # Colors for terminal output
@@ -146,9 +147,9 @@ def main():
             print(f"    - {name}")
 
     print_header("Access Points")
-    print_info("API Gateway:      http://localhost:8080")
-    print_info("API Docs:         http://localhost:8080/docs")
-    print_info("Health Check:     http://localhost:8080/health")
+    print_info("API Gateway:      http://localhost:8180")
+    print_info("API Docs:         http://localhost:8180/docs")
+    print_info("Health Check:     http://localhost:8180/health")
     print()
     print_info("Available Endpoints:")
     print("    POST /api/v1/query           - Send learning query")

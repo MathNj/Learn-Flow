@@ -1,0 +1,43 @@
+# Dapr Kafka PubSub Component
+# This component enables services to publish and subscribe to Kafka topics
+
+apiVersion: dapr.io/v1
+kind: Component
+metadata:
+  name: learnflow-pubsub
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    # Kafka broker address
+    - name: brokers
+      value: "localhost:9092"
+
+    # Consumer group ID (each service should have unique consumer group)
+    - name: consumerGroup
+      value: "learnflow-services"
+
+    # Enable key-based partitioning
+    - name: allowAutoTopicCreation
+      value: "true"
+
+    # Authentication (if needed)
+    # - name: sasl
+    #   value: "plain"
+    # - name: saslUsername
+    #   value: "kafka-user"
+    # - name: saslPassword
+    #   secretKeyRef:
+    #     name: kafka-secrets
+    #     key: password
+
+# Scopes for topic subscriptions (optional - restrict which services can subscribe to which topics)
+# scopes:
+#   - triage-service
+#   - concepts-agent
+#   - code-review-agent
+#   - debug-agent
+#   - exercise-agent
+#   - progress-service
+#   - websocket-service
+#   - notification-service

@@ -244,7 +244,7 @@ async def get_next_hint(request: DebugRequest) -> DebugHint:
 # Kafka Event Handlers (Dapr)
 # ============================================================================
 
-@app.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_REQUESTS)
+# @dapr.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_REQUESTS)
 async def handle_debug_request(event_data: dict) -> None:
     """Subscribe to debug.requests and provide help"""
     try:
@@ -257,4 +257,4 @@ async def handle_debug_request(event_data: dict) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8004)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8104)))

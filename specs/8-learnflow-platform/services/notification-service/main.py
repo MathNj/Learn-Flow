@@ -322,7 +322,7 @@ async def list_notifications(limit: int = 50):
 # Kafka Event Handler (Dapr)
 # ============================================================================
 
-@app.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_STRUGGLE)
+# @dapr.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_STRUGGLE)
 async def handle_struggle_alert(event_data: dict) -> None:
     """
     Subscribe to struggle.detected topic and send notifications.
@@ -357,4 +357,4 @@ async def handle_struggle_alert(event_data: dict) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8009)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8109)))

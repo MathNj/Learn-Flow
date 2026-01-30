@@ -49,7 +49,6 @@ Judges will evaluate both the development process behind your Skills AND test th
 * The Action: DO NOT write Skills directly or integrate MCP servers with Coding Agentss. DO NOT write application code manually.  
 * The Deliverable: Write Skills with MCP executed in Code for every component (e.g., \`kafka-setup.md\`, \`tutor-api.md\`). Let Claude Code and Goose build the actual app.
 
-**Hackathon 2:** You wrote Skills for Claude.  
 **Hackathon 3:** You write Skills with MCP Code Execution
 
 # **Part 2A: Glossary of Terms**

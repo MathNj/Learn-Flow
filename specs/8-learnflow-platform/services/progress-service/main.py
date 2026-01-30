@@ -304,7 +304,7 @@ async def record_progress_event(event: ProgressEvent) -> dict:
 # Kafka Event Handlers (Dapr)
 # ============================================================================
 
-@app.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_EXERCISES)
+# @dapr.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_EXERCISES)
 async def handle_exercise_generated(event_data: dict) -> None:
     """Handle newly generated exercises"""
     try:
@@ -313,7 +313,7 @@ async def handle_exercise_generated(event_data: dict) -> None:
     except Exception as e:
         print(f"Error handling exercise generated: {e}")
 
-@app.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_PROGRESS)
+# @dapr.subscribe(pubsub_name=KAFKA_BINDING_NAME, topic=TOPIC_PROGRESS)
 async def handle_progress_event(event_data: dict) -> None:
     """Handle progress events from code execution and other services"""
     try:
@@ -329,4 +329,4 @@ async def handle_progress_event(event_data: dict) -> None:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8006)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8106)))
