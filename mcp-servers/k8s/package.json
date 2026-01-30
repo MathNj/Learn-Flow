@@ -1,0 +1,23 @@
+{
+  "name": "learnflow-k8s-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for LearnFlow Kubernetes operations",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "prepare": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@kubernetes/client-node": "^0.20.0",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/yaml": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
