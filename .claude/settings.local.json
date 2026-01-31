@@ -6,7 +6,8 @@
       "Bash(python validate_pattern.py:*)",
       "Bash(python -m uvicorn:*)",
       "Bash(npm install:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

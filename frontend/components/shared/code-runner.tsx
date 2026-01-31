@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { CheckCircle, XCircle, Clock, Terminal } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, Terminal } from 'lucide-react'
 import type { CodeRunResult } from '@/lib/types'
 
 export interface CodeRunnerProps {
@@ -74,7 +74,7 @@ const CodeRunner: React.FC<CodeRunnerProps> = ({
           : 'bg-error-50 border-error-200 dark:bg-error-900/20 dark:border-error-800'
       )}>
         {isSuccess ? (
-          <CheckCircle className="h-4 w-4 text-success-600 dark:text-success-400" />
+          <CheckCircle2 className="h-4 w-4 text-success-600 dark:text-success-400" />
         ) : (
           <XCircle className="h-4 w-4 text-error-600 dark:text-error-400" />
         )}

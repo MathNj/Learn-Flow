@@ -8,7 +8,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { cn, formatRelativeTime, getSeverityColor } from '@/lib/utils'
 import type { StruggleAlert } from '@/lib/types'
 import { mockStruggleAlerts } from '@/lib/mock-data'
-import { AlertTriangle, Clock, RefreshCw, Check, XCircle, CodeError, Timer, TrendingDown, MessageCircle } from 'lucide-react'
+import { AlertTriangle, Clock, RefreshCw, Check, XCircle, Code, CheckCircle2, Timer, TrendingDown, MessageCircle } from 'lucide-react'
 
 export interface AlertsFeedProps {
   alerts?: StruggleAlert[]
@@ -104,7 +104,7 @@ const AlertsFeed: React.FC<AlertsFeedProps> = ({
       <CardContent className="p-0">
         {filteredAlerts.length === 0 ? (
           <div className="py-12 text-center">
-            <CheckCircle className="mx-auto h-12 w-12 text-success-500" />
+            <CheckCircle2 className="mx-auto h-12 w-12 text-success-500" />
             <p className="mt-2 text-sm text-slate-500">No alerts at this time</p>
           </div>
         ) : (

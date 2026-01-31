@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Send, Code, CheckCircle, Lightbulb, WifiOff, Loader2 } from 'lucide-react'
+import { Send, Code, CheckCircle2, Lightbulb, WifiOff, Loader2 } from 'lucide-react'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import type { ChatMessage } from '@/lib/types'
 import { mockChatMessages } from '@/lib/mock-data'
@@ -90,13 +90,13 @@ const TutorChat: React.FC<TutorChatProps> = ({
       case 'concepts':
         return <Lightbulb className="h-4 w-4" />
       case 'code-review':
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle2 className="h-4 w-4" />
       case 'debug':
         return <Code className="h-4 w-4" />
       case 'exercise':
         return <Code className="h-4 w-4" />
       case 'progress':
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle2 className="h-4 w-4" />
       default:
         return <div className="h-4 w-4 rounded-full bg-primary-500" />
     }

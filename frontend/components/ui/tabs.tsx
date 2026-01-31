@@ -66,7 +66,11 @@ const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 
 TabsList.displayName = 'TabsList'
 
-const TabsTrigger = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  value: string
+}
+
+const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
   ({ className, value, children, ...props }, ref) => {
     const { value: selectedValue, onValueChange } = useTabsContext()
     const isActive = value === selectedValue
@@ -93,7 +97,11 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttribut
 
 TabsTrigger.displayName = 'TabsTrigger'
 
-const TabsContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  value: string
+}
+
+const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
   ({ className, value, children, ...props }, ref) => {
     const { value: selectedValue } = useTabsContext()
 

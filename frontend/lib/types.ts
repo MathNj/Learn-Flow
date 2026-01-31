@@ -84,7 +84,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   timestamp: string
-  agentType?: 'concepts' | 'debug' | 'code-review' | 'exercise' | 'triage'
+  agentType?: 'concepts' | 'debug' | 'code-review' | 'exercise' | 'triage' | 'progress'
   metadata?: {
     topicId?: number
     exerciseId?: string
